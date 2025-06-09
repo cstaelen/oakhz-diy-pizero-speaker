@@ -2,10 +2,10 @@
 
 This educational project aims to build a prototype of a Bluetooth speaker that is detachable, reusable, and repairable, using open-source softwares, standards, and norms as much as possible.
 
-[<img title="a title" alt="Final render" src="./img/photo.jpg" style="width:48%" />](./img/photo.jpg)
-[<img title="a title" alt="Final render" src="./img/photo2.jpg" style="width:48%" />](./img/photo2.jpg)
-[<img title="a title" alt="Inside" src="./img/inside.jpg" style="width:33%" />](./img/inside.jpg)
-[<img title="a title" alt="Inside" src="./img/inside2.jpg" style="width:33%" />](./img/inside2.jpg)
+[<img title="a title" alt="Final render" src="./.github/img/photo.jpg" style="width:48%" />](./img/photo.jpg)
+[<img title="a title" alt="Final render" src="./.github/img/photo2.jpg" style="width:48%" />](./img/photo2.jpg)
+[<img title="a title" alt="Inside" src="./.github/img/inside.jpg" style="width:33%" />](./img/inside.jpg)
+[<img title="a title" alt="Inside" src="./.github/img/inside2.jpg" style="width:33%" />](./img/inside2.jpg)
 
 ## 📑 SUMMARY
 
@@ -328,8 +328,14 @@ def main():
     poll_interval = poll_interval / 1000
     poll_encoder()
 
-+    # Init default alsa volume
-+    subprocess.run(["amixer", "-D", "default", "set", "SoftMaster", "70%"])
++    # Set initial volume to 70%
++	initial_volume = 70
++	db_cursor.execute("UPDATE cfg_system SET value='" + str(initial_volume) + "' WHERE param='volknob'")
++	db.commit()
++	subprocess.run(["amixer", "-D", "default", "set", "SoftMaster", f"{initial_volume}%"])
++	mpd_cli.connect()
++	mpd_cli.setvol(initial_volume)
++	mpd_cli.disconnect()
 
 # Interrupt service routine (ISR)
 def encoder_isr(pin):
@@ -490,8 +496,8 @@ You can also create new config file and upload them :
 &nbsp;
 
 Here are 2 config file samples including a 10 bands equalizer :<br /><br />
-[➡️ Default EQ profile](./src/OaKhz-Default.yml)<br />
-[➡️ Loudness EQ profile](./src/OaKhz-Loudness.yml)
+[➡️ Default EQ profile](./config/OaKhz-Default.yml)<br />
+[➡️ Loudness EQ profile](./config/OaKhz-Loudness.yml)
 
 ---
 
@@ -555,24 +561,26 @@ wait_for_bluetooth() {
     return 1
 }
 
-if wait_for_bluetooth; then # Bluetooth service is available
+if wait_for_bluetooth; then
+    sleep 10
     play --volume="$VOLUME" "$HELLO_SOUND"
 else
+    echo "Bluetooth unavailable for 30s"
     exit 1
 fi
 
-while true; do # Wait for device to pair
-    if bluetoothctl info | grep -q "Connected: yes"; then
+while true; do
+    if bluetoothctl info | grep -q "Paired: yes"; then
         play --volume="$VOLUME" "$PAIR_SOUND"
 
-        # Release script if device is disconnected
-        while bluetoothctl info | grep -q "Connected: yes"; do
+        while bluetoothctl info | grep -q "Paired: yes"; do
             sleep 1
         done
+        echo "Device deconnected"
     fi
     sleep 1
-
 done
+
 
 ```
 

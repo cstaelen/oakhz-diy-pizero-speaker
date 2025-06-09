@@ -1,0 +1,13 @@
+[Unit]
+Description=Play sound when Bluetooth is ready
+After=bluetooth.target network.target
+Requires=bluetooth.target
+Wants=bluetooth.target
+
+[Service]
+ExecStart=/usr/local/bin/play-bluetooth-ready.sh
+Type=simple
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

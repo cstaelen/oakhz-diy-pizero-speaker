@@ -1,5 +1,5 @@
-title: "OaKhz EQ"
-description: "EQ 10 bandes basé sur Alsaequal - mêmes réglages pour L et R"
+title: "OaKhz EQ Default"
+description: "Default EQ 10 bands - Scale for OaKhz speaker"
 
 devices:
   samplerate: 44100  # ou 48000 selon ta source
@@ -45,6 +45,28 @@ filters:
   EQ10:
     type: Biquad
     parameters: { type: Peaking, freq: 16000, q: 1.0, gain: 0 }
+
+mixers:
+  Default volume:
+    channels:
+      in: 2
+      out: 2
+    description: Initial volume
+    labels: ~
+    mapping:
+    - dest: 0
+      mute: false
+      sources:
+      - channel: 0
+        gain: -12
+        inverted: false
+        mute: false
+        scale: dB
+      - channel: 1
+        gain: -12
+        inverted: false
+        mute: false
+        scale: dB
 
 pipeline:
   - type: Filter
