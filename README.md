@@ -2,10 +2,10 @@
 
 This educational project aims to build a prototype of a Bluetooth speaker that is detachable, reusable, and repairable, using open-source softwares, standards, and norms as much as possible.
 
-[<img title="a title" alt="Final render" src="./.github/img/photo.jpg" style="width:48%" />](./img/photo.jpg)
-[<img title="a title" alt="Final render" src="./.github/img/photo2.jpg" style="width:48%" />](./img/photo2.jpg)
-[<img title="a title" alt="Inside" src="./.github/img/inside.jpg" style="width:33%" />](./img/inside.jpg)
-[<img title="a title" alt="Inside" src="./.github/img/inside2.jpg" style="width:33%" />](./img/inside2.jpg)
+[<img title="a title" alt="Final render" src="./.github/img/photo.jpg" style="width:48%" />](./.github/img/photo.jpg)
+[<img title="a title" alt="Final render" src="./.github/img/photo2.jpg" style="width:48%" />](./.github/img/photo2.jpg)
+[<img title="a title" alt="Inside" src="./.github/img/inside.jpg" style="width:33%" />](./.github/img/inside.jpg)
+[<img title="a title" alt="Inside" src="./.github/img/inside2.jpg" style="width:33%" />](./.github/img/inside2.jpg)
 
 ## 📑 SUMMARY
 
@@ -121,9 +121,9 @@ Efficiency should be much better with a more powerful and better-manufactured so
 ### ⚙️ UI settings
 
 1. Boot Moode Audio.
-2. Go to audio settings and set "Named I2S device" to "HifiBerry MiniAmp"
+2. Go to audio settings and set **"Named I2S device"** to **"HifiBerry MiniAmp"**
 3. Reboot
-4. Go to audio settings and set "Output device" to "0:HifiBerry MiniAmp"
+4. Go to audio settings and set **"Output device"** to **"0:HifiBerry MiniAmp"**
 5. Sound should output from the DAC
 
 &nbsp;
@@ -183,30 +183,22 @@ sudo nano /etc/asound.conf
 Add :
 
 ```bash
+pcm._audioout {
+    type plug
+    slave.pcm "softvol"
+}
+
+ctl._audioout {
+    type hw
+    card 0
+}
+
 pcm.softvol {
     type softvol
     slave.pcm "camilladsp"
     control.name "SoftMaster"
     control.card 0
 }
-
-ctl.softvol {
-    type hw
-    card 0
-}
-```
-
-Edit BlueAlsa-Play conf:
-
-```bash
-sudo nano /etc/bluealsaaplay.conf
-```
-
-Update AUDIODEV value :
-
-```bash
-AUDIODEV=softvol
-BUFFERTIME=500000
 ```
 
 Reboot and stream some music to the pi using bluetooth.
@@ -480,7 +472,7 @@ In order to use equalizer feature with the Hifiberry Miniamp and softvol (requir
 
 Set `Volume Type` to `CamillaDSP` :
 
-[<img title="a title" alt="Inside" src="./img/camilla-moode.png" style="width:33%" />](./img/camilla-moode.png)
+[<img title="a title" alt="Inside" src="./.github/img/camilla-moode.png" style="width:33%" />](./.github/img/camilla-moode.png)
 
 ---
 

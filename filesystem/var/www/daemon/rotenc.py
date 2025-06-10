@@ -1,13 +1,7 @@
 #!/usr/bin/python3
-#
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright 2014 The moOde audio player project / Tim Curtis
-#
-
-# Usage:
-# rotenc_py <poll_interval in ms> <accel_factor> <volume_step> <pin_a> <pin_b> <print_debug>
-# rotenc_py 100 2 3 23 24 1 (print_debug is optional)
-#
+# Copyright 2025 OaKhz moode player project / cl-st
 
 import RPi.GPIO as GPIO
 import threading
@@ -32,157 +26,139 @@ accel_factor = 2
 volume_step = 3
 print_debug = 0
 thread_lock = threading.Lock()
+last_volume = 80
 
 def main():
-	global poll_interval, accel_factor, volume_step, pin_a, pin_b, print_debug, db, db_cursor, mpd_cli
+    global poll_interval, accel_factor, volume_step, pin_a, pin_b, print_debug, mpd_cli
 
-	# Parse input args (if any)
-	if len(sys.argv) > 1:
-		if sys.argv[1] == "--version" or sys.argv[1] == "-v":
-			print("rotenc.py version " + program_version)
-			sys.exit(0)
+    # Parse input args (if any)
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "--version" or sys.argv[1] == "-v":
+            print("rotenc.py version " + program_version)
+            sys.exit(0)
 
-		if len(sys.argv) >= 6:
-			poll_interval = int(sys.argv[1])
-			accel_factor = int(sys.argv[2])
-			volume_step = int(sys.argv[3])
-			pin_a = int(sys.argv[4])
-			pin_b = int(sys.argv[5])
+        if len(sys.argv) >= 6:
+            poll_interval = int(sys.argv[1])
+            accel_factor = int(sys.argv[2])
+            volume_step = int(sys.argv[3])
+            pin_a = int(sys.argv[4])
+            pin_b = int(sys.argv[5])
 
-		if len(sys.argv) == 7:
-			print_debug = int(sys.argv[6])
+        if len(sys.argv) == 7:
+            print_debug = int(sys.argv[6])
 
-		if print_debug:
-			print(sys.argv, len(sys.argv))
+        if print_debug:
+            print(sys.argv, len(sys.argv))
 
-	# Setup GPIO
-	GPIO.setmode(GPIO.BCM) # SoC pin numbering
-	GPIO.setwarnings(True)
-	GPIO.setup(pin_a, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-	GPIO.setup(pin_b, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-	GPIO.setup(pin_button, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-	GPIO.add_event_detect(pin_a, GPIO.BOTH, callback=encoder_isr) # NOTE: bouncetime= is not specified
-	GPIO.add_event_detect(pin_b, GPIO.BOTH, callback=encoder_isr)
-	GPIO.add_event_detect(pin_button, GPIO.FALLING, callback=button_handler, bouncetime=200)
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setwarnings(True)
+    GPIO.setup(pin_a, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(pin_b, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(pin_button, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.add_event_detect(pin_a, GPIO.BOTH, callback=encoder_isr)
+    GPIO.add_event_detect(pin_b, GPIO.BOTH, callback=encoder_isr)
+    GPIO.add_event_detect(pin_button, GPIO.FALLING, callback=button_handler, bouncetime=200)
 
-	# Setup sqlite
-	db = sqlite3.connect('/var/local/www/db/moode-sqlite3.db')
-	db.row_factory = sqlite3.Row
-	db.text_factory = str
-	db_cursor = db.cursor()
+    mpd_cli = musicpd.MPDClient()
 
-	# Setup MPD client
-	mpd_cli = musicpd.MPDClient()
-	#mpd_cli.connect()
+    if print_debug:
+        print("set initial volume")
 
-	# Detect encoder changes
-	poll_interval = poll_interval / 1000
-	poll_encoder()
+    set_volume(80)
 
-	# Set initial volume (relative to software state, not physical knob)
-	initial_volume = 70
-	db_cursor.execute("UPDATE cfg_system SET value='" + str(initial_volume) + "' WHERE param='volknob'")
-	db.commit()
-	subprocess.run(["amixer", "-D", "default", "set", "SoftMaster", f"{initial_volume}%"])
-	mpd_cli.connect()
-	mpd_cli.setvol(initial_volume)
-	mpd_cli.disconnect()
+    sleep(2)
 
-# Interrupt service routine (ISR)
+    poll_encoder()
+
+def set_volume(volume):
+    global mpd_cli
+
+    # Clamp volume
+    volume = max(0, min(100, volume))
+
+    if print_debug:
+        print("set_volume:" +  str(volume))
+
+    with sqlite3.connect('/var/local/www/db/moode-sqlite3.db') as db:
+        db.row_factory = sqlite3.Row
+        db.text_factory = str
+        db_cursor = db.cursor()
+        db_cursor.execute("UPDATE cfg_system SET value=? WHERE param='volknob'", (str(volume),))
+        db.commit()
+
+    subprocess.run(
+        ["amixer", "-D", "default", "set", "SoftMaster", f"{volume}%"],
+        stdout=subprocess.DEVNULL,
+    )
+
+    mpd_cli.connect()
+    mpd_cli.setvol(volume)
+    mpd_cli.disconnect()
+
 def encoder_isr(pin):
-	global current_pos, last_a_state, last_b_state, thread_lock
+    global current_pos, last_a_state, last_b_state, thread_lock
 
-	# Read pin states
-	pin_a_state = GPIO.input(pin_a)
-	pin_b_state = GPIO.input(pin_b)
+    pin_a_state = GPIO.input(pin_a)
+    pin_b_state = GPIO.input(pin_b)
 
-	# Ignore interrupt if no state change (debounce)
-	if last_a_state == pin_a_state and last_b_state == pin_b_state:
-		return
+    if last_a_state == pin_a_state and last_b_state == pin_b_state:
+        return
 
-	# Store current as last state
-	last_a_state = pin_a_state
-	last_b_state = pin_b_state
+    last_a_state = pin_a_state
+    last_b_state = pin_b_state
 
-	# Ignore all states except final state where both are 1
-	# Use pin returned from the ISR to determine which pin came first before reaching 1-1
-	if pin_a_state and pin_b_state:
-		thread_lock.acquire()
+    if pin_a_state and pin_b_state:
+        thread_lock.acquire()
+        if pin == pin_a:
+            current_pos -= 1
+        else:
+            current_pos += 1
+        thread_lock.release()
 
-		if pin == pin_a:
-			current_pos -= 1 # CCW
-		else:
-			current_pos += 1 # CW
-
-		thread_lock.release()
-
-	return
-
-# Polling loop for updating volume
 def poll_encoder():
-	global current_pos, last_pos, thread_lock
-	direction = ""
+    global current_pos, last_pos, thread_lock
+    direction = ""
 
-	while True:
-		thread_lock.acquire()
+    while True:
+        thread_lock.acquire()
 
-		if current_pos > last_pos:
-			direction = "+"
-			if (current_pos - last_pos) < accel_factor:
-				update_volume(direction, 1)
-			else:
-				update_volume(direction, volume_step)
-		elif current_pos < last_pos:
-			direction = "-"
-			if (last_pos - current_pos) < accel_factor:
-				update_volume(direction, 1)
-			else:
-				update_volume(direction, volume_step)
+        if current_pos > last_pos:
+            direction = "+"
+            step = 1 if (current_pos - last_pos) < accel_factor else volume_step
+            update_volume(direction, step)
+        elif current_pos < last_pos:
+            direction = "-"
+            step = 1 if (last_pos - current_pos) < accel_factor else volume_step
+            update_volume(direction, step)
 
-		thread_lock.release()
+        thread_lock.release()
 
-		if (current_pos != last_pos) and print_debug:
-			print(abs(current_pos - last_pos), direction)
+        if (current_pos != last_pos) and print_debug:
+            print(abs(current_pos - last_pos), direction)
 
-		last_pos = current_pos
+        last_pos = current_pos
 
-		sleep(poll_interval)
+        sleep(poll_interval / 1000)
 
-# Update MPD, Bluetooth and UI volume
 def update_volume(direction, step):
-	db_cursor.execute("SELECT value FROM cfg_system WHERE param='volknob' OR param='volume_mpd_max'")
-	row = db_cursor.fetchone()
-	current_vol = int(row['value'])
-	row = db_cursor.fetchone()
-	volume_mpd_max = int(row['value'])
+    with sqlite3.connect('/var/local/www/db/moode-sqlite3.db') as db:
+        db.row_factory = sqlite3.Row
+        db.text_factory = str
+        db_cursor = db.cursor()
+        db_cursor.execute("SELECT value FROM cfg_system WHERE param='volknob' OR param='volume_mpd_max'")
+        row = db_cursor.fetchone()
+        current_vol = int(row['value'])
+        row = db_cursor.fetchone()
+        volume_mpd_max = int(row['value'])
 
-	if direction == "+":
-		new_volume = current_vol + step
-	else:
-		new_volume = current_vol - step
+    if print_debug:
+        print("update_volume:" + str(current_vol))
 
-	if new_volume > volume_mpd_max:
-		new_volume = volume_mpd_max
+    new_volume = current_vol + step if direction == "+" else current_vol - step
+    new_volume = min(volume_mpd_max, max(0, min(100, new_volume)))
 
-	if new_volume > 100:
-		new_volume = 100
-	elif new_volume < 0:
-		new_volume = 0
+    set_volume(new_volume)
 
-	db_cursor.execute("UPDATE cfg_system SET value='" + str(new_volume) + "' WHERE param='volknob'")
-	db.commit()
-
-	amixer_vol = max(0, min(100, new_volume))
-	subprocess.run(
-    		["amixer", "-D", "default", "set", "'SoftMaster'", f"{amixer_vol}%"],
-    		stdout=subprocess.DEVNULL,
-	)
-
-	mpd_cli.connect()
-	mpd_cli.setvol(new_volume)
-	mpd_cli.disconnect()
-
-# Handle push button of the rotary encoder
 def button_handler(channel):
     global last_volume
 
@@ -204,18 +180,15 @@ def button_handler(channel):
 
             if current_vol > 0:
                 last_volume = current_vol
-                subprocess.run(["amixer", "-D", "default", "set", "SoftMaster", "0%"])
+                set_volume(0)
                 if print_debug:
                     print("Mute")
             else:
-                subprocess.run(["amixer", "-D", "default", "set", "SoftMaster", f"{last_volume}%"])
+                set_volume(last_volume)
                 if print_debug:
                     print(f"Unmute → {last_volume}%")
         except Exception as e:
             print("Error mute/unmute :", e)
 
-#
-# Script starts here
-#
 if __name__ == '__main__':
-	main()
+    main()

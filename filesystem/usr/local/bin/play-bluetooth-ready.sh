@@ -4,7 +4,6 @@ export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 
 HELLO_SOUND="/usr/share/sounds/hello.mp3"
 PAIR_SOUND="/usr/share/sounds/pair.mp3"
-VOLUME="0.10"
 
 # Check if bluetooth is ready and pairable
 wait_for_pairable() {
@@ -22,7 +21,7 @@ wait_for_pairable() {
 # Bluetooth start up
 if wait_for_pairable; then
     echo "Bluetooth pairable"
-    play --volume="$VOLUME" "$HELLO_SOUND"
+    play --volume=0.10 "$HELLO_SOUND"
 else
     echo "Bluetooth not pairable after 30s"
     exit 1
@@ -37,8 +36,7 @@ while true; do
 
     # Refused connection if a device is already paired
     if [ "$connected_devices" -gt 1 ]; then
-        echo "A device is already connected. Disconnect others."
-        
+	echo "A device is already connected. Disconnect others."
         bluetoothctl devices Connected | awk '{print $2}' | tail -n +2 | while read -r mac; do
             echo "Disconnect $mac"
             bluetoothctl disconnect "$mac"
@@ -46,11 +44,11 @@ while true; do
     fi
 
     if bluetoothctl info | grep -q "Paired: yes" && ! $paired_announced; then
-        play --volume="$VOLUME" "$PAIR_SOUND"
+        play --volume=0.05 "$PAIR_SOUND"
         paired_announced=true
     fi
 
-    # Reset if disconnected
+    # Reset on disconnect
     if ! bluetoothctl info | grep -q "Connected: yes"; then
         paired_announced=false
         stream_ready_announced=false

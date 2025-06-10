@@ -46,28 +46,6 @@ filters:
     type: Biquad
     parameters: { type: Peaking, freq: 16000, q: 1.0, gain: 0 }
 
-mixers:
-  Default volume:
-    channels:
-      in: 2
-      out: 2
-    description: Initial volume
-    labels: ~
-    mapping:
-    - dest: 0
-      mute: false
-      sources:
-      - channel: 0
-        gain: -12
-        inverted: false
-        mute: false
-        scale: dB
-      - channel: 1
-        gain: -12
-        inverted: false
-        mute: false
-        scale: dB
-
 pipeline:
   - type: Filter
     names: [EQ1, EQ2, EQ3, EQ4, EQ5, EQ6, EQ7, EQ8, EQ9, EQ10]
