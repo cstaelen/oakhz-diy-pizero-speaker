@@ -62,7 +62,7 @@ This educational project aims to build a prototype of a Bluetooth speaker that i
 ### 🔋 Power
 
 - Battery 18650 x1
-- Solar panel
+- Solar panel ([link](https://www.amazon.fr/dp/B09F3LWLJ1))
 
 ### 🔧 Misc
 
@@ -180,26 +180,7 @@ Edit or create :
 sudo nano /etc/asound.conf
 ```
 
-Add :
-
-```bash
-pcm._audioout {
-    type plug
-    slave.pcm "softvol"
-}
-
-ctl._audioout {
-    type hw
-    card 0
-}
-
-pcm.softvol {
-    type softvol
-    slave.pcm "camilladsp"
-    control.name "SoftMaster"
-    control.card 0
-}
-```
+➡️ [**See file content**](./filesystem/etc/asound.conf)
 
 Reboot and stream some music to the pi using bluetooth.
 Test volume control :
@@ -230,239 +211,9 @@ Set 2 actions to push button :
 2. Long press : gracefull pi shutdown
 3. Double press : switch CamillaDSP equalizer config
 
+Update Moode `rotenc.py` file :
 
-/usr/share/camilladsp/configs/OaKhz-eq-10-bands.yml
-/usr/share/camilladsp/configs/V3-Loudness.yml
-
-<details>
-  <summary>See the diff of the updated script (/var/www/daemon/rotenc.py) ⤵️</summary>
-
-```diff
-#!/usr/bin/python3
-#
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright 2014 The moOde audio player project / Tim Curtis
-#
-
-# Usage:
-# rotenc_py <poll_interval in ms> <accel_factor> <volume_step> <pin_a> <pin_b> <print_debug>
-# rotenc_py 100 2 3 23 24 1 (print_debug is optional)
-#
-
-import RPi.GPIO as GPIO
-import threading
-import subprocess
-import sys
--from time import sleep
-+from time import sleep, time
-import sqlite3
-import musicpd
-+import os
-
-program_version = "1.0"
-
-current_pos = 0
-last_pos = 0
-last_a_state = 1
-last_b_state = 1
-pin_a = 23
-pin_b = 24
-+pin_button = 22
-poll_interval = 100 # milliseconds
-accel_factor = 2
-volume_step = 3
-print_debug = 0
-thread_lock = threading.Lock()
-
-def main():
-    global poll_interval, accel_factor, volume_step, pin_a, pin_b, print_debug, db, db_cursor, mpd_cli
-
-    # Parse input args (if any)
-    if len(sys.argv) > 1:
-        if sys.argv[1] == "--version" or sys.argv[1] == "-v":
-            print("rotenc.py version " + program_version)
-            sys.exit(0)
-
-        if len(sys.argv) >= 6:
-            poll_interval = int(sys.argv[1])
-            accel_factor = int(sys.argv[2])
-            volume_step = int(sys.argv[3])
-            pin_a = int(sys.argv[4])
-            pin_b = int(sys.argv[5])
-
-        if len(sys.argv) == 7:
-            print_debug = int(sys.argv[6])
-
-        if print_debug:
-            print(sys.argv, len(sys.argv))
-
-    # Setup GPIO
-    GPIO.setmode(GPIO.BCM) # SoC pin numbering
-    GPIO.setwarnings(True)
-    GPIO.setup(pin_a, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.setup(pin_b, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-+   GPIO.setup(pin_button, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.add_event_detect(pin_a, GPIO.BOTH, callback=encoder_isr) # NOTE: bouncetime= is not specified
-    GPIO.add_event_detect(pin_b, GPIO.BOTH, callback=encoder_isr)
-+   GPIO.add_event_detect(pin_button, GPIO.FALLING, callback=button_handler, bouncetime=200)
-
-    # Setup sqlite
-    db = sqlite3.connect('/var/local/www/db/moode-sqlite3.db')
-    db.row_factory = sqlite3.Row
-    db.text_factory = str
-    db_cursor = db.cursor()
-
-    # Setup MPD client
-    mpd_cli = musicpd.MPDClient()
-    #mpd_cli.connect()
-
-    # Detect encoder changes
-    poll_interval = poll_interval / 1000
-    poll_encoder()
-
-+    # Set initial volume to 70%
-+	initial_volume = 70
-+	db_cursor.execute("UPDATE cfg_system SET value='" + str(initial_volume) + "' WHERE param='volknob'")
-+	db.commit()
-+	subprocess.run(["amixer", "-D", "default", "set", "SoftMaster", f"{initial_volume}%"])
-+	mpd_cli.connect()
-+	mpd_cli.setvol(initial_volume)
-+	mpd_cli.disconnect()
-
-# Interrupt service routine (ISR)
-def encoder_isr(pin):
-    global current_pos, last_a_state, last_b_state, thread_lock
-
-    # Read pin states
-    pin_a_state = GPIO.input(pin_a)
-    pin_b_state = GPIO.input(pin_b)
-
-    # Ignore interrupt if no state change (debounce)
-    if last_a_state == pin_a_state and last_b_state == pin_b_state:
-        return
-
-    # Store current as last state
-    last_a_state = pin_a_state
-    last_b_state = pin_b_state
-
-    # Ignore all states except final state where both are 1
-    # Use pin returned from the ISR to determine which pin came first before reaching 1-1
-    if pin_a_state and pin_b_state:
-        thread_lock.acquire()
-
-        if pin == pin_a:
-            current_pos -= 1 # CCW
-        else:
-            current_pos += 1 # CW
-
-        thread_lock.release()
-
-    return
-
-# Polling loop for updating volume
-def poll_encoder():
-    global current_pos, last_pos, thread_lock
-    direction = ""
-
-    while True:
-        thread_lock.acquire()
-
-        if current_pos > last_pos:
-            direction = "+"
-            if (current_pos - last_pos) < accel_factor:
-                update_volume(direction, 1)
-            else:
-                update_volume(direction, volume_step)
-        elif current_pos < last_pos:
-            direction = "-"
-            if (last_pos - current_pos) < accel_factor:
-                update_volume(direction, 1)
-            else:
-                update_volume(direction, volume_step)
-
-        thread_lock.release()
-
-        if (current_pos != last_pos) and print_debug:
-            print(abs(current_pos - last_pos), direction)
-
-        last_pos = current_pos
-
-        sleep(poll_interval)
-
-# Update MPD, Bluetooth and UI volume
-def update_volume(direction, step):
-    db_cursor.execute("SELECT value FROM cfg_system WHERE param='volknob' OR param='volume_mpd_max'")
-    row = db_cursor.fetchone()
-    current_vol = int(row['value'])
-    row = db_cursor.fetchone()
-    volume_mpd_max = int(row['value'])
-
-    if direction == "+":
-        new_volume = current_vol + step
-    else:
-        new_volume = current_vol - step
-
-    if new_volume > volume_mpd_max:
-        new_volume = volume_mpd_max
-
-    if new_volume > 100:
-        new_volume = 100
-    elif new_volume < 0:
-        new_volume = 0
-
-    db_cursor.execute("UPDATE cfg_system SET value='" + str(new_volume) + "' WHERE param='volknob'")
-    db.commit()
-
-+   subprocess.run(
-+       ["amixer", "-D", "default", "set", "'SoftMaster'", f"{new_volume}%"],
-+           stdout=subprocess.DEVNULL,
-+   )
-
-    mpd_cli.connect()
-    mpd_cli.setvol(new_volume)
-    mpd_cli.disconnect()
-
-+# Handle push button of the rotary encoder
-+def button_handler(channel):
-+    global last_volume
-+
-+    press_start = time()
-+    while GPIO.input(pin_button) == 0:
-+        sleep(0.01)
-+    press_duration = time() - press_start
-+
-+    if press_duration >= 3:
-+        if print_debug:
-+            print("Long press : shutdown...")
-+        os.system("sudo shutdown -h now")
-+    else:
-+        try:
-+            output = subprocess.check_output(["amixer", "-D", "default", "get", "SoftMaster"]).decode()
-+            for line in output.splitlines():
-+                if "Front Left:" in line:
-+                    current_vol = int(line.split()[3].strip('[]%'))
-+
-+            if current_vol > 0:
-+                last_volume = current_vol
-+                subprocess.run(["amixer", "-D", "default", "set", "SoftMaster", "0%"])
-+                if print_debug:
-+                    print("Mute")
-+            else:
-+                subprocess.run(["amixer", "-D", "default", "set", "SoftMaster", f"{last_volume}%"])
-+                if print_debug:
-+                    print(f"Unmute → {last_volume}%")
-+        except Exception as e:
-+            print("Error mute/unmute :", e)
-+
-#
-# Script starts here
-#
-if __name__ == '__main__':
-    main()
-
-```
-
-</details>
+➡️ [**See file content (/var/www/daemon/rotenc.py)**](./filesystem/var/www/daemon/rotenc.py)
 
 &nbsp;
 
@@ -532,52 +283,8 @@ sudo apt-get install sox libsox-fmt-all
 sudo nano /usr/local/bin/play-bluetooth-ready.sh
 ```
 
-<details>
-    <summary>Show code to add ⤵️</summary>
+➡️ [**See file content (/usr/local/bin/play-bluetooth-ready.sh)**](./filesystem/usr/local/bin/play-bluetooth-ready.sh)
 
-```bash
-
-#!/bin/bash
-
-HELLO_SOUND="/usr/share/sounds/hello.mp3"
-PAIR_SOUND="/usr/share/sounds/pair.mp3"
-VOLUME="0.10"
-
-wait_for_bluetooth() {
-    for i in {1..30}; do
-        if hciconfig hci0 | grep -q "UP RUNNING"; then
-            return 0
-        fi
-        sleep 1
-    done
-    return 1
-}
-
-if wait_for_bluetooth; then
-    sleep 10
-    play --volume="$VOLUME" "$HELLO_SOUND"
-else
-    echo "Bluetooth unavailable for 30s"
-    exit 1
-fi
-
-while true; do
-    if bluetoothctl info | grep -q "Paired: yes"; then
-        play --volume="$VOLUME" "$PAIR_SOUND"
-
-        while bluetoothctl info | grep -q "Paired: yes"; do
-            sleep 1
-        done
-        echo "Device deconnected"
-    fi
-    sleep 1
-done
-
-
-```
-
-</details>
-&nbsp;
 
 ```bash
 sudo chmod +x /usr/local/bin/play-bluetooth-ready.sh
@@ -591,26 +298,7 @@ Service :
 sudo nano /etc/systemd/system/bluetooth-ready-sound.service
 ```
 
-<details>
-    <summary>Show code to add ⤵️</summary>
-
-```ini
-[Unit]
-Description=Play sound when Bluetooth is ready
-After=bluetooth.service
-Requires=bluetooth.service
-
-[Service]
-ExecStart=/usr/local/bin/play-bluetooth-ready.sh
-Type=simple
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-```
-
-</details>
-&nbsp;
+➡️ [**See file content (/usr/local/bin/play-bluetooth-ready.sh)**](./filesystem/etc/systemd/system/bluetooth-ready-sound.service)
 
 Enable and start service :
 
@@ -629,11 +317,7 @@ sudo systemctl enable --now bluetooth-ready-sound.service
 sudo nano /usr/local/bin/play-shutdown-sound.sh
 ```
 
-```bash
-#!/bin/bash
-
-play --volume=0.15 /usr/share/sounds/shutdown.mp3
-```
+➡️ [**See file content (/usr/local/bin/play-shutdown-sound.sh)**](./filesystem/usr/local/bin/play-shutdown-sound.sh)
 
 ```bash
 sudo chmod +x /usr/local/bin/play-shutdown-sound.sh
@@ -645,26 +329,7 @@ sudo chmod +x /usr/local/bin/play-shutdown-sound.sh
 sudo nano /etc/systemd/system/shutdown-sound.service
 ```
 
-<details>
-    <summary>Show code to add ⤵️</summary>
-
-```ini
-[Unit]
-Description=Play MP3 sound before shutdown
-DefaultDependencies=no
-Before=shutdown.target reboot.target halt.target
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/play-shutdown-sound.sh
-TimeoutSec=10
-RemainAfterExit=true
-
-[Install]
-WantedBy=halt.target reboot.target shutdown.target
-```
-
-</details>
+➡️ [**See file content (/etc/systemd/system/shutdown-sound.service)**](./filesystem/etc/systemd/system/shutdown-sound.service)
 &nbsp;
 &nbsp;
 

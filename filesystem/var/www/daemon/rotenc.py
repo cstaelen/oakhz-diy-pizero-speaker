@@ -50,6 +50,13 @@ def main():
         if print_debug:
             print(sys.argv, len(sys.argv))
 
+    mpd_cli = musicpd.MPDClient()
+    
+    if print_debug:
+        print("set initial volume")
+
+    set_volume(80)
+    
     GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(True)
     GPIO.setup(pin_a, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -58,15 +65,6 @@ def main():
     GPIO.add_event_detect(pin_a, GPIO.BOTH, callback=encoder_isr)
     GPIO.add_event_detect(pin_b, GPIO.BOTH, callback=encoder_isr)
     GPIO.add_event_detect(pin_button, GPIO.FALLING, callback=button_handler, bouncetime=200)
-
-    mpd_cli = musicpd.MPDClient()
-
-    if print_debug:
-        print("set initial volume")
-
-    set_volume(80)
-
-    sleep(2)
 
     poll_encoder()
 
