@@ -2,10 +2,11 @@
 
 This educational project aims to build a prototype of a Bluetooth speaker that is detachable, reusable, and repairable, using open-source softwares, standards, and norms as much as possible.
 
-[<img title="a title" alt="Final render" src="./.github/img/photo.jpg" style="width:48%" />](./.github/img/photo.jpg)
-[<img title="a title" alt="Final render" src="./.github/img/photo2.jpg" style="width:48%" />](./.github/img/photo2.jpg)
-[<img title="a title" alt="Inside" src="./.github/img/inside.jpg" style="width:33%" />](./.github/img/inside.jpg)
-[<img title="a title" alt="Inside" src="./.github/img/inside2.jpg" style="width:33%" />](./.github/img/inside2.jpg)
+[<img title="a title" alt="Final render" src="./.github/img/photo.jpg" style="width:49%" />](./.github/img/photo.jpg)
+[<img title="a title" alt="Final render" src="./.github/img/photo2.jpg" style="width:49%" />](./.github/img/photo2.jpg)
+[<img title="a title" alt="Inside" src="./.github/img/inside.jpg" style="width:32.5%" />](./.github/img/inside.jpg)
+[<img title="a title" alt="Inside" src="./.github/img/inside2.jpg" style="width:32.5%" />](./.github/img/inside2.jpg)
+[<img title="a title" alt="Inside" src="./.github/img/side.jpg" style="width:32.5%" />](./.github/img/side.jpg)
 
 ## 📑 SUMMARY
 
