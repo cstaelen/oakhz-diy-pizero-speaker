@@ -67,6 +67,8 @@ def main():
     GPIO.add_event_detect(pin_button, GPIO.FALLING, callback=button_handler, bouncetime=200)
 
     poll_encoder()
+    
+    set_volume(80)
 
 def set_volume(volume):
     global mpd_cli

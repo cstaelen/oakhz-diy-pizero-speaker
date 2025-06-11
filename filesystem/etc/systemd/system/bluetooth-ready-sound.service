@@ -1,6 +1,6 @@
 [Unit]
 Description=Play sound when Bluetooth is ready
-After=bluetooth.target network.target
+After=bluetooth.target
 Requires=bluetooth.target
 Wants=bluetooth.target
 

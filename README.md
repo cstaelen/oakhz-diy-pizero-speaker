@@ -4,9 +4,9 @@ This educational project aims to build a prototype of a Bluetooth speaker that i
 
 [<img title="a title" alt="Final render" src="./.github/img/photo.jpg" style="width:49%" />](./.github/img/photo.jpg)
 [<img title="a title" alt="Final render" src="./.github/img/photo2.jpg" style="width:49%" />](./.github/img/photo2.jpg)
-[<img title="a title" alt="Inside" src="./.github/img/inside.jpg" style="width:32.5%" />](./.github/img/inside.jpg)
-[<img title="a title" alt="Inside" src="./.github/img/inside2.jpg" style="width:32.5%" />](./.github/img/inside2.jpg)
-[<img title="a title" alt="Inside" src="./.github/img/side.jpg" style="width:32.5%" />](./.github/img/side.jpg)
+[<img title="a title" alt="Inside" src="./.github/img/inside.jpg" style="width:32%" />](./.github/img/inside.jpg)
+[<img title="a title" alt="Inside" src="./.github/img/inside2.jpg" style="width:32%" />](./.github/img/inside2.jpg)
+[<img title="a title" alt="Inside" src="./.github/img/side.jpg" style="width:32%" />](./.github/img/side.jpg)
 
 ## 📑 SUMMARY
 
@@ -134,7 +134,7 @@ Efficiency should be much better with a more powerful and better-manufactured so
 
 ### ⚙️ GPIO rotary wiring
 
-[<img title="a title" alt="Alt text" src="./img/rotary-encoder.jpg" style="width:20%" />](./img/rotary-encoder.jpg)
+[<img title="a title" alt="Alt text" src="./.github/img/rotary-encoder.jpg" style="width:20%" />](./img/rotary-encoder.jpg)
 
 &nbsp;
 | Function | GPIO (logical name) | Physical Pin | Connected to | Description |
