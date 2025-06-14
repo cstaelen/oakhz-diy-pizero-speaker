@@ -17,20 +17,17 @@ This educational project aims to build a prototype of a Bluetooth speaker that i
   - [🔧 Misc](#-misc)
 - [🧪 User Feedback](#-user-feedback)
 - [💽 Install Moode Audio](#-install-moode-audio)
-- [🔈 DAC : HiFiBerry MiniAmp](#-dac--hifiberry-miniamp)
-  - [test](#-test)
-  - [⚙️ GPIO DAC wiring](#-gpio-dac-wiring)
+- [🎧 DAC : HiFiBerry MiniAmp](#-dac--hifiberry-miniamp)
+  - [🪛 GPIO DAC wiring](#-gpio-dac-wiring)
   - [⚙️ UI Settings](#-ui-settings)
+  - [📈 Alsa setup](#-alsa-setup)
 - [🎛 Rotary Encoder](#-rotary-encoder)
-  - [⚙️ GPIO rotary wiring](#-gpio-rotary-wiring)
-  - [📈 Volume control](#-volume-control)
-  - [📈 Volume control](#-volume-control)
+  - [🪛 GPIO rotary wiring](#-gpio-rotary-wiring)
   - [🧠 Smart button](#-smart-button)
-- [📊 Equalizer with CamillaDSP](#-equalizer-with-camillaDSP)
 - [🔊 Sound notification setup](#-sound-notification-setup)
   - [📶 Bluetooth ready sound notification](#-bluetooth-ready-sound-notification)
   - [🛑 Pi Zero shutdown sound notification](#-pi-zero-shutdown-sound-notification)
-- [📻 Install Plexamp](#-plexamp-setup)
+- [📻 Plexamp setup](#-plexamp-setup)
 - [📚 Resources](#-resources)
 
 &nbsp;
@@ -42,7 +39,7 @@ This educational project aims to build a prototype of a Bluetooth speaker that i
 - Raspberry pi zero powered by the battery
 - Bluetooth connexion (pin optional)
 - Rotary encoder volume (bluetooth + local)
-- Use of camillaDSP
+- Use of alsaequal
 - Moode UI accessible by URL:
   - Using preset wifi network if reachable
   - Using wifi hotspot if the preset network is not reachable,.
@@ -103,9 +100,9 @@ Efficiency should be much better with a more powerful and better-manufactured so
 
 &nbsp;
 
-## 🔈 DAC : HiFiBerry MiniAmp
+## 🎧 DAC : HiFiBerry MiniAmp
 
-### ⚙️ GPIO DAC wiring
+### 🪛 GPIO DAC wiring
 
 [<img title="a title" alt="Alt text" src="https://indibit.de/wp-content/uploads/2015/08/Raspberry-Pi-2-Model-B-GPIO-Belegung.png" style="width:20%" target="_blank" />](https://indibit.de/wp-content/uploads/2015/08/Raspberry-Pi-2-Model-B-GPIO-Belegung.png)
 
@@ -121,18 +118,60 @@ Efficiency should be much better with a more powerful and better-manufactured so
 
 ### ⚙️ UI settings
 
-1. Boot Moode Audio.
-2. Go to audio settings and set **"Named I2S device"** to **"HifiBerry MiniAmp"**
-3. Reboot
-4. Go to audio settings and set **"Output device"** to **"0:HifiBerry MiniAmp"**
-5. Sound should output from the DAC
+1. Go to audio settings and set **"DT Overlay"** to **"hifiberry-dar"**
+2. Reboot (if needed)
+3. Go to audio settings and set **"Output device"** to **"0:snd_rpi_hifiberry_dac"**
+4. Sound should output from the DAC
 
 &nbsp;
+
+### 📈 Alsa setup
+
+Goals:
+- Be able to use Graphic EQ from Moode UI (alsaequal) on bluetooth inbounds
+- Be able to control volume with rotary encoder
+
+The HifiBerry Miniamp doesn't have any amixer controls because the PCM5102A chip **doesn't include any hardware volume control**.
+
+You can't use amixer as-is — you need to add a **software volume control** (softvol).
+
+But using softvol by-pass Graphiq EQ configuration set in Moode UI.
+
+In order to get volume management with rotary encore and apply an equalizer, we need use **softvol** and **alsaequal**.
+
+<pre>
+ℹ️​ Bluetooth sound process
+--------------------------
+&nbsp;
+[Bluetooth (BlueZ + BlueALSA)]
+         ↓
+[bluealsa-aplay]  ← reads the A2DP audio stream
+         ↓
+[_audioout_] ← Alsa sound input
+        ↓
+[softvol] ← software volume, controllable via `amixer`
+         ↓
+[alsaequal] ← Alsa Equalizer
+         ↓
+[HiFiBerry MiniAmp sound card]
+</pre>
+
+Edit or create :
+
+```bash
+sudo nano /etc/asound.conf
+```
+Example below assume your dac is identified by `card 0`. (cf `aplay -l`)
+➡️ [**See file content**](./filesystem/etc/asound.conf)
+
+Reboot and stream some music to the pi using bluetooth.
+Graphic EQ in Moode UI > Audio should have effect.
+
 &nbsp;
 
 ## 🎛 ROTARY ENCODER
 
-### ⚙️ GPIO rotary wiring
+### 🪛 GPIO rotary wiring
 
 [<img title="a title" alt="Alt text" src="./.github/img/rotary-encoder.jpg" style="width:20%" />](./img/rotary-encoder.jpg)
 
@@ -146,61 +185,6 @@ Efficiency should be much better with a more powerful and better-manufactured so
 | Ground (GND) | GND | Pin 20 | GND | Voltage reference for the entire encoder circuit |
 
 &nbsp;
-&nbsp;
-
-### 📈 Volume control
-
-The HifiBerry Miniamp doesn't have any amixer controls because the PCM5102A chip **doesn't include any hardware volume control**.
-
-You can't use amixer as-is — you need to add a **software volume control** (softvol).
-
-But using softvol by-pass Graphiq EQ configuration set in Moode UI.
-
-In order to get volume management with rotary encore and apply an equalizer, we need use **softvol** with **CamillaDSP**.
-
-<pre>
-ℹ️​ Bluetooth sound process
---------------------------
-&nbsp;
-[Bluetooth (BlueZ + BlueALSA)]
-         ↓
-[bluealsa-aplay]  ← reads the A2DP audio stream
-         ↓
-[softvol] ← software volume, controllable via `amixer`
-         ↓
-[ALSA plugin layer]
-         ↓
-[camilladsp] ← DSP processing (EQ, filters, balance…)
-         ↓
-[HiFiBerry MiniAmp sound card]
-</pre>
-
-Edit or create :
-
-```bash
-sudo nano /etc/asound.conf
-```
-
-➡️ [**See file content**](./filesystem/etc/asound.conf)
-
-Reboot and stream some music to the pi using bluetooth.
-Test volume control :
-
-```bash
-amixer -D default sset 'SoftMaster' 10%,10%
-amixer -D default sset 'SoftMaster' 5%+
-amixer -D default sset 'SoftMaster' 5%-
-```
-
-Update `/var/www/daemon/rotenc.py` (line ~162) to increase or decrease bluetooth volume using amixer :
-
-```python
-amixer_vol = max(0, min(100, new_volume))
-subprocess.run(
-        ["amixer", "-D", "default", "set", "'SoftMaster'", f"{amixer_vol}%"],
-        stdout=subprocess.DEVNULL,
-)
-```
 
 &nbsp;
 
@@ -215,43 +199,6 @@ Set 2 actions to push button :
 Update Moode `rotenc.py` file :
 
 ➡️ [**See file content (/var/www/daemon/rotenc.py)**](./filesystem/var/www/daemon/rotenc.py)
-
-&nbsp;
-
-## 📊 EQUALIZER with CamillaDSP
-
-In order to use equalizer feature with the Hifiberry Miniamp and softvol (required to use the rotary encoder) we can use **CamillaDSP**
-
-Set `Volume Type` to `CamillaDSP` :
-
-[<img title="a title" alt="Inside" src="./.github/img/camilla-moode.png" style="width:33%" />](./.github/img/camilla-moode.png)
-
----
-
-In bottom of the audio settings page, you will find `Equalizers` section.<br />
-Here you can activate the CamillaDSP equalizer feature and set a config.
-
-You can also create new config file and upload them :
-
-1. Click on `EDIT` CamillaDSP button.
-2. In `File management` section click on `upload` to select config file
-3. On top of the page, in `Signal processing` selector, pick your new configuration. 
-
-&nbsp;
-
-Here are 2 config file samples including a 10 bands equalizer :<br /><br />
-[➡️ Default EQ profile](./config/OaKhz-Default.yml)<br />
-[➡️ Loudness EQ profile](./config/OaKhz-Loudness.yml)
-
----
-
-&nbsp;
-
-It can be useful to adjust selected configuration in live :
-
-1. In the Camilla DSP edit screen, in `Pipeline Editor` active the `status` toggle.
-2. Click on `OPEN` button.
-3. In `Filters` tab, you can modify equalizer band values.
 
 &nbsp;
 
@@ -347,7 +294,7 @@ sudo systemctl enable shutdown-sound.service
 
 ## 📻 PLEXAMP SETUP
 
-http://oakhz.local/setup_3rdparty_plexamp.txt
+http://moode.local/setup_3rdparty_plexamp.txt
 
 ## 📚 RESOURCES
 
