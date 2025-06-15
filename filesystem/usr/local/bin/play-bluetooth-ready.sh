@@ -4,6 +4,7 @@ export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 
 HELLO_SOUND="/usr/share/sounds/hello.mp3"
 PAIR_SOUND="/usr/share/sounds/pair.mp3"
+VOLUME=0.15
 
 # Check if bluetooth is ready and pairable
 wait_for_pairable() {
@@ -21,7 +22,7 @@ wait_for_pairable() {
 # Bluetooth start up
 if wait_for_pairable; then
     echo "Bluetooth pairable"
-    play --volume=0.10 "$HELLO_SOUND"
+    play --volume=$VOLUME "$HELLO_SOUND"
 else
     echo "Bluetooth not pairable after 30s"
     exit 1
@@ -44,7 +45,7 @@ while true; do
     fi
 
     if bluetoothctl info | grep -q "Paired: yes" && ! $paired_announced; then
-        play --volume=0.05 "$PAIR_SOUND"
+        play --volume=$VOLUME "$PAIR_SOUND"
         paired_announced=true
     fi
 

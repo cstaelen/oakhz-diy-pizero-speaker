@@ -11,6 +11,7 @@ from time import sleep, time
 import sqlite3
 import musicpd
 import os
+import requests
 
 program_version = "1.0"
 
@@ -71,8 +72,13 @@ def main():
 
 def set_volume(volume):
 	global mpd_cli
+ 
+	# For some reasons, on boot, volume is set to 0 despite of the `set_volume` in the main function.
+	# If volume equal 0, we assume it's a volume initialisation and set it to initial volume.
+	if volume == 0:
+		volume = init_volume
 
-	# Clamp volume
+	# Reduced volume range: 1 - 100
 	volume = max(1, min(100, volume))
 
 	if print_debug:
@@ -96,6 +102,14 @@ def set_volume(volume):
 	mpd_cli.connect()
 	mpd_cli.setvol(volume)
 	mpd_cli.disconnect()
+ 
+ 	# Handle vollume for plexamp
+	PLEXAMP_URL = f"http://localhost:32500/player/playback/setParameters?volume={volume}&commandID=9999&type=music"
+	try:
+		response = requests.get(PLEXAMP_URL)
+		response.raise_for_status()
+	except requests.RequestException as e:
+		print(f"Error setting Plexamp volume: {e}")
 
 def encoder_isr(pin):
 	global current_pos, last_a_state, last_b_state, thread_lock
@@ -153,14 +167,8 @@ def update_volume(direction, step):
 		row = db_cursor.fetchone()
 		volume_mpd_max = int(row['value'])
 
-	if current_vol == 0:
-		current_vol = init_volume
-     
-	if print_debug:
-		print("update_volume:" + str(current_vol))
-
 	new_volume = current_vol + step if direction == "+" else current_vol - step
-	new_volume = min(volume_mpd_max, max(1, min(100, new_volume)))
+	new_volume = min(volume_mpd_max, max(0, min(100, new_volume)))
 
 	set_volume(new_volume)
 

@@ -20,7 +20,9 @@ This educational project aims to build a prototype of a Bluetooth speaker that i
 - [🎧 DAC : HiFiBerry MiniAmp](#-dac--hifiberry-miniamp)
   - [🪛 GPIO DAC wiring](#-gpio-dac-wiring)
   - [⚙️ UI Settings](#-ui-settings)
-  - [📈 Alsa setup](#-alsa-setup)
+- [📈 ALSA CONFIG](#-alsa-config)
+  - [⚙️ Sound process](#-sound-process)
+  - [📊 Equalizer with CamillaDSP](#-equalizer-with-camilladsp)
 - [🎛 Rotary Encoder](#-rotary-encoder)
   - [🪛 GPIO rotary wiring](#-gpio-rotary-wiring)
   - [🧠 Smart button](#-smart-button)
@@ -39,7 +41,7 @@ This educational project aims to build a prototype of a Bluetooth speaker that i
 - Raspberry pi zero powered by the battery
 - Bluetooth connexion (pin optional)
 - Rotary encoder volume (bluetooth + local)
-- Use of alsaequal
+- Use of alsaequal or CamillaDSP
 - Moode UI accessible by URL:
   - Using preset wifi network if reachable
   - Using wifi hotspot if the preset network is not reachable,.
@@ -75,7 +77,7 @@ This educational project aims to build a prototype of a Bluetooth speaker that i
 
 **Sound quality +++**
 
-After some adjustments using Moode’s Graphic EQ, the sound quality is more than decent.
+After some adjustments using Moode’s EQ, the sound quality is more than decent.
 Be careful with low-frequency vibrations — it's important to properly isolate and secure each component to avoid any unwanted buzzing or rattling.
 
 **Battery duration ++**
@@ -118,26 +120,35 @@ Efficiency should be much better with a more powerful and better-manufactured so
 
 ### ⚙️ UI settings
 
-1. Go to audio settings and set **"DT Overlay"** to **"hifiberry-dar"**
+1. Go to audio settings and set **"DT Overlay"** to **"hifiberry-dac"**
 2. Reboot (if needed)
 3. Go to audio settings and set **"Output device"** to **"0:snd_rpi_hifiberry_dac"**
 4. Sound should output from the DAC
+5. OPTIONAL : disable HDMI audio interface by editing `/boot/firmware/config.txt` add or update : 
+```ini
+ dtparam=audio=off
+ dtoverlay=vc4-kms-v3d,noaudio
+```
 
 &nbsp;
 
-### 📈 Alsa setup
+## 📈 ALSA CONFIG
 
-Goals:
-- Be able to use Graphic EQ from Moode UI (alsaequal) on bluetooth inbounds
-- Be able to control volume with rotary encoder
+### ⚙️ Sound process
+
+**Goals:**
+- Be able to use Equalizer from Moode UI (AlsaEqual or CamillaDSP) on bluetooth inbounds
+- Be able to control volume with rotary encoder (use of `amixer` command)
+
+&nbsp;
 
 The HifiBerry Miniamp doesn't have any amixer controls because the PCM5102A chip **doesn't include any hardware volume control**.
 
 You can't use amixer as-is — you need to add a **software volume control** (softvol).
 
-But using softvol by-pass Graphiq EQ configuration set in Moode UI.
+But using softvol by-pass equalizer configuration set in Moode UI.
 
-In order to get volume management with rotary encore and apply an equalizer, we need use **softvol** and **alsaequal**.
+In order to get volume management with rotary encoder and apply an equalizer, we need use **softvol** and **alsaequal/camilladsp**.
 
 <pre>
 ℹ️​ Bluetooth sound process
@@ -151,7 +162,7 @@ In order to get volume management with rotary encore and apply an equalizer, we 
         ↓
 [softvol] ← software volume, controllable via `amixer`
          ↓
-[alsaequal] ← Alsa Equalizer
+[alsaequal/camilladsp] ← Equalizer
          ↓
 [HiFiBerry MiniAmp sound card]
 </pre>
@@ -162,12 +173,39 @@ Edit or create :
 sudo nano /etc/asound.conf
 ```
 Example below assume your dac is identified by `card 0`. (cf `aplay -l`)
+
 ➡️ [**See file content**](./filesystem/etc/asound.conf)
 
 Reboot and stream some music to the pi using bluetooth.
 Graphic EQ in Moode UI > Audio should have effect.
 
+
+
 &nbsp;
+
+### 📊 Equalizer with CamillaDSP
+
+Set `Volume Type` to `CamillaDSP` :
+
+[<img title="a title" alt="Inside" src="./.github/img/camilla-moode.png" style="width:33%" />](./.github/img/camilla-moode.png)
+
+---
+
+In bottom of the audio settings page, you will find `Equalizers` section.<br />
+Here you can activate the CamillaDSP equalizer feature and set a config.
+
+You can also create new config file and upload them :
+
+1. Click on `EDIT` CamillaDSP button.
+2. In `File management` section click on `upload` to select config file
+3. On top of the page, in `Signal processing` selector, pick your new configuration. 
+
+&nbsp;
+
+Here are 2 config file samples including a 10 bands equalizer :<br /><br />
+[➡️ Default EQ profile](./config/OaKhz-Default.yml)<br />
+[➡️ Loudness EQ profile](./config/OaKhz-Loudness.yml)
+
 
 ## 🎛 ROTARY ENCODER
 
@@ -294,10 +332,11 @@ sudo systemctl enable shutdown-sound.service
 
 ## 📻 PLEXAMP SETUP
 
-http://moode.local/setup_3rdparty_plexamp.txt
+https://github.com/moode-player/moode/blob/master/www/setup_3rdparty_plexamp.txt
 
 ## 📚 RESOURCES
 
 - Moode doc : https://github.com/moode-player/docs/blob/main/setup_guide.md
-- Plexamp - physical volume : https://forums.plex.tv/t/physical-volume-controls-are-a-must-how-to-add-to-plexamp/916914/4
 - MP3 sound effects : https://pixabay.com/sound-effects
+- Plexamp - physical volume : https://forums.plex.tv/t/physical-volume-controls-are-a-must-how-to-add-to-plexamp/916914/4
+- Tidal connect instruction (not tested yet): https://linuxaudiofoundation.org/musiclounge-tidal-connect-installation/
