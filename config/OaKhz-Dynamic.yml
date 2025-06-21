@@ -1,0 +1,77 @@
+---
+title: OaKhz Loudness
+description: Loudness + Stereo widen + HPF for Dayton DY-070 on HiFiBerry MiniAmp
+
+devices:
+  capture:
+    type: Stdin
+    channels: 2
+    format: S32LE
+  playback:
+    type: Alsa
+    channels: 2
+    device: plughw:0,0
+    format: S32LE
+  samplerate: 44100
+  chunksize: 512
+  queuelimit: 1
+  volume_ramp_time: 150
+
+filters:
+  hpf:
+    type: Biquad
+    parameters:
+      type: Highpass
+      freq: 80
+      q: 0.707
+
+  gain:
+    type: Gain
+    parameters:
+      gain: -3.0
+      scale: dB
+      mute: false
+      inverted: false
+
+  loudness:
+    type: Loudness
+    parameters:
+      fader: Main
+      low_boost: 6.0
+      high_boost: 3.0
+      reference_level: -12
+      attenuate_mid: false
+
+mixers:
+  stereo_widen:
+    channels:
+      in: 2
+      out: 2
+    mapping:
+      - dest: 0
+        sources:
+          - channel: 0
+            gain: -1.0
+            scale: dB
+          - channel: 1
+            gain: -4.0
+            scale: dB
+      - dest: 1
+        sources:
+          - channel: 1
+            gain: -1.0
+            scale: dB
+          - channel: 0
+            gain: -4.0
+            scale: dB
+
+pipeline:
+  - type: Filter
+    channels: [0, 1]
+    names: [hpf, gain, loudness]
+
+  - type: Mixer
+    name: stereo_widen
+
+processors: ~
+...
