@@ -1,4 +1,4 @@
-# 🔊 OaKhz Audio v3 - Sound Feedback System
+# 🔊 OaKhz Audio - Sound Feedback System
 
 Audio feedback system for OaKhz Audio Bluetooth speaker. Provides audible notifications for system events via PulseAudio.
 
@@ -28,7 +28,7 @@ The OaKhz Audio sound feedback system provides pleasant audible notifications fo
 
 **Note**: Disconnection sound is disabled by default (not played when devices disconnect).
 
-All sounds use **PulseAudio (paplay)** at 65% volume and are routed through the CamillaDSP equalizer pipeline.
+All sounds use **PulseAudio (paplay)** at 65% volume (except shutdown sound at 75%) and are routed through the CamillaDSP equalizer pipeline.
 
 ---
 
@@ -75,7 +75,7 @@ Event Flow:
 **Trigger**: Before system shutdown or reboot
 **Sound**: WAV audio file
 **Duration**: Variable
-**Volume**: 65%
+**Volume**: 75% (PulseAudio volume: 49152)
 **Purpose**: "Goodbye" notification before powering off
 
 ```
@@ -159,10 +159,10 @@ sudo systemctl disable oakhz-audio-events
 Test sounds manually:
 
 ```bash
-# Test with paplay (65% volume)
+# Test with paplay (65% volume for ready/connect, 75% for shutdown)
 paplay --volume=42598 /opt/oakhz/sounds/ready.wav
 paplay --volume=42598 /opt/oakhz/sounds/connect.wav
-paplay --volume=42598 /opt/oakhz/sounds/shutdown.wav
+paplay --volume=49152 /opt/oakhz/sounds/shutdown.wav  # 75%
 
 # Test at different volumes
 paplay --volume=32768 /opt/oakhz/sounds/ready.wav  # 50%
@@ -379,7 +379,7 @@ lame -q 0 -b 192 output.wav output_48k.mp3
 ```
 Sound File (WAV 48kHz)
       ↓
-paplay (PulseAudio @ 65% volume)
+paplay (PulseAudio @ 65%/75% volume)
       ↓
 PulseAudio (camilladsp_out sink)
       ↓
@@ -411,7 +411,7 @@ Speakers 🔊
              └────────────────┬───────────────────┘
                               ↓
                      ┌──────────────────┐
-                     │  paplay (65%)    │
+                     │  paplay (65%/75%)│
                      │  PulseAudio      │
                      └────────┬─────────┘
                               ↓
@@ -571,45 +571,4 @@ sudo systemctl disable oakhz-ready-sound oakhz-bt-monitor oakhz-shutdown-sound
 
 ---
 
-## 📝 Changelog
-
-### v3.0 (2025-10-12)
-- Initial release with sound feedback system
-- 4 sound events: ready, connect, disconnect, shutdown
-- Pleasant musical tones generated with sox
-- Full integration with CamillaDSP equalizer pipeline
-- Python-based Bluetooth connection monitor
-- Systemd service integration
-
----
-
-## 🤝 Contributing
-
-Want to improve the sound feedback system?
-
-- Share your custom sound packs
-- Report bugs or issues
-- Suggest new sound events
-- Improve sound quality
-
----
-
-## 📜 License
-
-Part of the OaKhz Audio v3 project - GPL-3.0 License
-
----
-
-## 🙏 Credits
-
-- **sox** - Sound generation
-- **lame** - MP3 encoding
-- **mpg123** - MP3 playback
-- **BlueZ** - Bluetooth stack
-- **systemd** - Service management
-
----
-
-**Enjoy your talking speaker! 🔊**
-
-*OaKhz Audio v3 - October 2025*
+*OaKhz Audio - October 2025*

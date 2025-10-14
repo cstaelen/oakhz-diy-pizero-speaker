@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # OaKhz Audio - Rotary Encoder Control Installation
-# To be added to the v3 installation script
+# To be added to the installation script
 #
 
 set -e

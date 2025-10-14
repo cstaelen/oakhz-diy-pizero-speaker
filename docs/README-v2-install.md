@@ -1,4 +1,4 @@
-# 🎵 OaKhz Audio v3 - DIY Bluetooth Speaker
+# 🎵 OaKhz Audio - DIY Bluetooth Speaker
 
 Complete documentation for building your own intelligent Bluetooth speaker with Raspberry Pi Zero 2W, HiFiBerry MiniAmp, and CamillaDSP equalizer.
 
@@ -19,7 +19,7 @@ Complete documentation for building your own intelligent Bluetooth speaker with 
 
 ## 🎯 Overview
 
-OaKhz Audio v3 is a DIY Bluetooth speaker based on Raspberry Pi that offers:
+OaKhz Audio is a DIY Bluetooth speaker based on Raspberry Pi that offers:
 
 - ✅ **Bluetooth A2DP Streaming** - High-quality audio
 - ✅ **10-Band Parametric Equalizer** - Precise sound control with CamillaDSP
@@ -718,42 +718,5 @@ sudo systemctl daemon-reload
 ```
 
 ---
-
-## 🤝 Contribution
-
-This project is open-source! Feel free to:
-- 🐛 Report bugs
-- 💡 Propose improvements
-- 📝 Improve documentation
-- 🎨 Share your enclosure designs
-
----
-
-## 📜 License
-
-This project is under GPL-3.0 license. You are free to modify and redistribute it.
-
----
-
-## 🙏 Credits
-
-- Based on **Raspberry Pi** ecosystem
-- Uses **BlueZ** for Bluetooth
-- **PulseAudio** for audio routing
-- **CamillaDSP** for parametric equalization
-- **Flask** for web interface
-- **HiFiBerry** for audio quality
-
----
-
-## 📞 Support
-
-- **GitHub Issues**: [link-to-repo]
-- **Documentation**: [link-to-wiki]
-- **Forum**: [link-to-forum]
-
----
-
-**Enjoy your OaKhz Audio speaker! 🎵**
 
 *Version 3.0 - October 2025*

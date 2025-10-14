@@ -602,32 +602,5 @@ awk '{print $4}' /home/oakhz/boot-times.log | sed 's/s//' | awk '{sum+=$1; count
 
 ---
 
-## 🤝 Contributing
-
-Help improve boot times further:
-
-- Test on different Raspberry Pi models
-- Identify additional services to disable
-- Share benchmarking results
-- Report compatibility issues
-
----
-
-## 📜 License
-
-GPL-3.0 License - Free to use, modify, and redistribute
-
----
-
-## 🙏 Credits
-
-- Systemd optimization techniques
-- Raspberry Pi boot optimization community
-- OaKhz Audio project
-
----
-
-**Fast boot for instant Bluetooth! 🚀**
-
 *OaKhz Audio - Fast Boot Optimization*
 *October 2025*

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# OaKhz Audio v3 - Installation Script
+# OaKhz Audio - Installation Script
 # Automatic installation for Raspberry Pi OS Lite + HiFiBerry MiniAmp
 #
 
@@ -14,7 +14,7 @@ NC='\033[0m'
 
 echo -e "${GREEN}"
 echo "=================================="
-echo "  OaKhz Audio v3 - Installation"
+echo "  OaKhz Audio - Installation"
 echo "=================================="
 echo -e "${NC}"
 
@@ -798,7 +798,7 @@ cat > $INSTALL_DIR/templates/index.html << 'EOFHTML'
         </div>
 
         <footer>
-            <p>OaKhz DIY Bluetooth Speaker v3.0</p>
+            <p>OaKhz DIY Bluetooth Speaker</p>
         </footer>
     </div>
 

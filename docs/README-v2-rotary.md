@@ -1,4 +1,4 @@
-# 🎛️ OaKhz Audio v3 - Rotary Encoder Control
+# 🎛️ OaKhz Audio - Rotary Encoder Control
 
 Physical rotary encoder control for OaKhz Audio Bluetooth speaker. Provides tactile volume control and media functions.
 
@@ -83,7 +83,7 @@ KY-040 Rotary Encoder        Raspberry Pi Zero 2W
 ### Prerequisites
 
 - Raspberry Pi OS Lite 64-bit
-- OaKhz Audio v3 base system installed
+- OaKhz Audio base system installed
 - Rotary encoder connected to GPIO pins
 
 ### Quick Installation
@@ -756,56 +756,4 @@ DT_PIN = 23   # Was 24
 
 ---
 
-## 📝 Changelog
-
-### v3.6 (2025-10-14)
-- **FIXED**: Volume control now uses PulseAudio (`pactl`) instead of ALSA (`amixer`)
-- **FIXED**: Service runs as `oakhz` user instead of root (better permissions)
-- **FIXED**: Button logic corrected (`while button.is_pressed` instead of `while not`)
-- **FIXED**: Throttling moved inside lock to prevent event flooding
-- **CHANGED**: GPIO pins updated to 23/24/22 (was 17/27/22)
-- **ADDED**: Threading lock for thread-safe volume changes
-- Volume control: `camilladsp_out` sink via `pactl`
-- Throttling: 150ms delay between volume changes
-
-### v3.0 (2025-10-12)
-- Initial release with rotary encoder support
-- Volume control (rotation)
-- Mute toggle (single click)
-- Track skip (medium press)
-- Shutdown (long press 3s)
-- Full gpiozero integration
-- playerctl + BlueZ D-Bus fallback
-
----
-
-## 🤝 Contributing
-
-Improvements welcome!
-
-- Better acceleration algorithms
-- Support for more encoder types
-- Additional button functions
-- LED patterns
-- OLED display integration
-
----
-
-## 📜 License
-
-Part of the OaKhz Audio v3 project - GPL-3.0 License
-
----
-
-## 🙏 Credits
-
-- **gpiozero** - Simplified GPIO control
-- **RPi.GPIO** - Low-level GPIO access
-- **playerctl** - Universal media control
-- **BlueZ** - Bluetooth stack
-
----
-
-**Enjoy tactile control of your speaker! 🎛️**
-
-*OaKhz Audio v3 - October 2025*
+*OaKhz Audio - October 2025*

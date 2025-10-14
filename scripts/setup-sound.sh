@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # OaKhz Audio - Audio Feedback Services Installation
-# To be added to the v3 installation script
+# To be added to the installation script
 #
 
 set -e
@@ -51,7 +51,7 @@ def play_sound(sound_file, restore_volume=True):
     """Play sound using paplay (PulseAudio) with volume adjustment"""
     try:
         logger.info(f'Playing: {sound_file}')
-        volume_percent = 65
+        volume_percent = 80
         pa_volume = int(65536 * volume_percent / 100)
 
         env = os.environ.copy()
@@ -223,12 +223,22 @@ EOF
 # ============================================
 cat > /usr/local/bin/oakhz-shutdown-sound.sh << 'EOF'
 #!/bin/bash
-# Play shutdown sound using paplay
-export PULSE_SERVER=unix:/run/pulse/native
-if [ -f /opt/oakhz/sounds/shutdown.wav ]; then
-    paplay --volume=42598 /opt/oakhz/sounds/shutdown.wav 2>/dev/null
-fi
-sleep 2
+# Play shutdown sound directly via ALSA (bypass PulseAudio)
+# Stop CamillaDSP first to release the DAC
+# Uses pre-adjusted 25% volume WAV file
+
+# Stop CamillaDSP to release the HiFiBerry DAC
+systemctl stop camilladsp.service 2>/dev/null
+
+# Small delay to ensure DAC is released
+sleep 0.2
+
+# Play directly to HiFiBerry DAC using plughw for automatic rate conversion
+# Volume is pre-adjusted to 25% in the WAV file
+aplay -D plughw:1,0 /opt/oakhz/sounds/shutdown.wav 2>/dev/null
+
+# Wait for playback to complete
+sleep 1
 EOF
 
 chmod +x /usr/local/bin/oakhz-shutdown-sound.sh
@@ -239,12 +249,13 @@ cat > /etc/systemd/system/oakhz-shutdown-sound.service << 'EOF'
 Description=OaKhz Shutdown Sound
 DefaultDependencies=no
 Before=shutdown.target reboot.target halt.target
-After=camilladsp.service
 
 [Service]
 Type=oneshot
+User=root
 ExecStart=/usr/local/bin/oakhz-shutdown-sound.sh
-TimeoutStartSec=5
+TimeoutStartSec=10
+RemainAfterExit=yes
 
 [Install]
 WantedBy=halt.target reboot.target shutdown.target

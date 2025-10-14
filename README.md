@@ -1,8 +1,10 @@
-# 🎵 OaKhz Audio v3 - Complete DIY Bluetooth Speaker System
+# 🎵 OaKhz Audio - Complete DIY Bluetooth Speaker System
 
 High-quality DIY Bluetooth speaker built with Raspberry Pi Zero 2W, HiFiBerry MiniAmp, and CamillaDSP equalizer with web interface, sound feedback, and physical rotary controls.
 
 This educational project aims to build a prototype of a Bluetooth speaker that is detachable, reusable, and repairable, using open-source softwares, standards, and norms as much as possible.
+
+**GitHub Repository:** https://github.com/cstaelen/oakhz-diy-pizero-speaker
 
 -- Written with Claude AI
 
@@ -18,7 +20,7 @@ This educational project aims to build a prototype of a Bluetooth speaker that i
 
 This complete system includes three main components:
 
-### 1. 🔊 [Base System - Bluetooth Speaker & Equalizer](./README-v2-install.md)
+### 1. 🔊 [Base System - Bluetooth Speaker & Equalizer](./docs/README-v2-install.md)
 
 The core audio system with Bluetooth streaming and web-based parametric equalizer.
 
@@ -29,11 +31,11 @@ The core audio system with Bluetooth streaming and web-based parametric equalize
 - ✅ Professional audio pipeline: PulseAudio → Loopback → CamillaDSP → HiFiBerry
 - ✅ Real-time debounced controls (150ms)
 
-**[📖 Read Full Installation Guide →](./README-v2-install.md)**
+**[📖 Read Full Installation Guide →](./docs/README-v2-install.md)**
 
 ---
 
-### 2. 🔔 [Sound Feedback System](./README-v2-sound.md)
+### 2. 🔔 [Sound Feedback System](./docs/README-v2-sound.md)
 
 Audible notifications for system events through PulseAudio.
 
@@ -41,15 +43,15 @@ Audible notifications for system events through PulseAudio.
 - 🎵 Ready sound (Bluetooth discoverable - C major arpeggio)
 - 🎵 Connection sound (device connects/reconnects - high chime)
 - 🎵 Shutdown sound (system powering off - descending arpeggio)
-- 🔊 All sounds at 65% volume via `paplay`
+- 🔊 All sounds at 80% volume via `paplay` (shutdown at 25%)
 - 🎯 Automatic PulseAudio routing through equalizer
 - 🔄 Single device mode (auto-disconnect old connections)
 
-**[📖 Read Full Documentation →](./README-v2-sound.md)**
+**[📖 Read Full Documentation →](./docs/README-v2-sound.md)**
 
 ---
 
-### 3. 🎛️ [Rotary Encoder Control](./README-v2-rotary.md)
+### 3. 🎛️ [Rotary Encoder Control](./docs/README-v2-rotary.md)
 
 Physical rotary encoder for tactile volume and media control.
 
@@ -64,11 +66,11 @@ Physical rotary encoder for tactile volume and media control.
 
 **GPIO Pins:** CLK=23, DT=24, SW=22
 
-**[📖 Read Full Documentation →](./README-v2-rotary.md)**
+**[📖 Read Full Documentation →](./docs/README-v2-rotary.md)**
 
 ---
 
-### 4. 🚀 [Fast Boot Optimization](./README-v2-fast-boot.md) *(Optional)*
+### 4. 🚀 [Fast Boot Optimization](./docs/README-v2-fast-boot.md) *(Optional)*
 
 Optimize Raspberry Pi boot time for rapid Bluetooth availability.
 
@@ -82,11 +84,11 @@ Optimize Raspberry Pi boot time for rapid Bluetooth availability.
 
 **Impact:** Connect to Bluetooth twice as fast after boot!
 
-**[📖 Read Full Documentation →](./README-v2-fast-boot.md)**
+**[📖 Read Full Documentation →](./docs/README-v2-fast-boot.md)**
 
 ---
 
-### 5. 📡 [WiFi Access Point Fallback](./README-v2-accesspoint.md) *(Optional)*
+### 5. 📡 [WiFi Access Point Fallback](./docs/README-v2-accesspoint.md) *(Optional)*
 
 Automatic WiFi client/Access Point switching for equalizer access anywhere.
 
@@ -100,7 +102,7 @@ Automatic WiFi client/Access Point switching for equalizer access anywhere.
 
 **Access:** Home WiFi → `http://[IP]` | AP mode → `http://192.168.50.1`
 
-**[📖 Read Full Documentation →](./README-v2-accesspoint.md)**
+**[📖 Read Full Documentation →](./docs/README-v2-accesspoint.md)**
 
 ---
 
@@ -188,7 +190,7 @@ sudo reboot
 │              Sound Feedback & Routing                    │
 ├──────────────────────────────────────────────────────────┤
 │  Audio Events  │  Bluetooth     │  Auto-routing         │
-│  (paplay 65%)  │  Monitor       │  (switch-on-connect)  │
+│  (paplay 65%/75%) │  Monitor    │  (switch-on-connect)  │
 │  - Ready       │  - Connection  │                        │
 │  - Shutdown    │  - Single dev  │                        │
 └────────┬───────┴───────┬────────┴────────────────────────┘
@@ -280,22 +282,22 @@ sudo reboot
 ### Common Issues
 
 **No Bluetooth connection?**
-→ See [Base System Troubleshooting](./README-v2-install.md#troubleshooting)
+→ See [Base System Troubleshooting](./docs/README-v2-install.md#troubleshooting)
 
 **No sound output?**
-→ See [Base System - No Sound](./README-v2-install.md#no-sound)
+→ See [Base System - No Sound](./docs/README-v2-install.md#no-sound)
 
 **Sound feedback not playing?**
-→ See [Sound Feedback Troubleshooting](./README-v2-sound.md#troubleshooting)
+→ See [Sound Feedback Troubleshooting](./docs/README-v2-sound.md#troubleshooting)
 
 **Rotary encoder not responding?**
-→ See [Rotary Encoder Troubleshooting](./README-v2-rotary.md#troubleshooting)
+→ See [Rotary Encoder Troubleshooting](./docs/README-v2-rotary.md#troubleshooting)
 
 **Volume control not working?**
-→ See [Rotary - Volume Not Changing](./README-v2-rotary.md#volume-not-changing)
+→ See [Rotary - Volume Not Changing](./docs/README-v2-rotary.md#volume-not-changing)
 
 **Web interface not accessible?**
-→ See [Base System - Web Interface Not Responding](./README-v2-install.md#web-interface-not-responding)
+→ See [Base System - Web Interface Not Responding](./docs/README-v2-install.md#web-interface-not-responding)
 
 ---
 
@@ -315,8 +317,7 @@ OAKHZ_DOC/
 │   ├── setup-sound.sh                # Sound feedback installer
 │   ├── setup-rotary.sh               # Rotary encoder installer
 │   ├── setup-fast-boot.sh            # Fast boot installer
-│   ├── setup-accesspoint.sh          # WiFi AP fallback installer
-│   └── setup-events.sh               # System events installer
+│   └── setup-accesspoint.sh          # WiFi AP events installer
 └── sounds/                           # Audio files
 ```
 
@@ -362,36 +363,6 @@ Base System (Required)
 
 ---
 
-## 📝 Version Information
-
-**Current Version**: v3.6 (October 2025)
-
-**Recent Changes:**
-- Fixed rotary encoder volume control (PulseAudio integration)
-- Improved thread-safety with volume locking
-- Updated GPIO pins (23/24/22)
-- Enhanced sound feedback with paplay
-- Optimized debouncing (150ms)
-
-**See individual changelogs:**
-- [Base System Changelog](./README-v2-install.md) (section not available)
-- [Sound Feedback Changelog](./README-v2-sound.md#changelog)
-- [Rotary Encoder Changelog](./README-v2-rotary.md#changelog)
-
----
-
-## 🤝 Contributing
-
-Improvements welcome!
-
-- Report bugs via GitHub Issues
-- Share custom sound packs
-- Contribute equalizer presets
-- Design 3D-printed enclosures
-- Improve documentation
-
----
-
 ## 📜 License
 
 GPL-3.0 License - Free to use, modify, and redistribute
@@ -414,15 +385,4 @@ GPL-3.0 License - Free to use, modify, and redistribute
 
 ---
 
-## 📞 Support
-
-- **Documentation**: This repository
-- **Issues**: GitHub Issues (if repository available)
-- **Community**: Share your builds!
-
----
-
-**Build your own intelligent speaker! 🎵**
-
-*OaKhz Audio v3 - Complete System*
-*October 2025*
+*OaKhz Audio - *October 2025*
