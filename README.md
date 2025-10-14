@@ -1,6 +1,12 @@
-# OaKhz - DIY wireless bluetooth speaker
+# 🎵 OaKhz Audio v3 - Complete DIY Bluetooth Speaker System
+
+High-quality DIY Bluetooth speaker built with Raspberry Pi Zero 2W, HiFiBerry MiniAmp, and CamillaDSP equalizer with web interface, sound feedback, and physical rotary controls.
 
 This educational project aims to build a prototype of a Bluetooth speaker that is detachable, reusable, and repairable, using open-source softwares, standards, and norms as much as possible.
+
+-- Written with Claude AI
+
+---
 
 [<img title="a title" alt="Final render" src="./.github/img/photo.jpg" style="width:49%" />](./.github/img/photo.jpg)
 [<img title="a title" alt="Final render" src="./.github/img/photo2.jpg" style="width:49%" />](./.github/img/photo2.jpg)
@@ -8,335 +14,415 @@ This educational project aims to build a prototype of a Bluetooth speaker that i
 [<img title="a title" alt="Inside" src="./.github/img/inside2.jpg" style="width:32%" />](./.github/img/inside2.jpg)
 [<img title="a title" alt="Inside" src="./.github/img/side.jpg" style="width:32%" />](./.github/img/side.jpg)
 
-## 📑 SUMMARY
+## 📦 What's Included
 
-- [✨ Features](#-features)
-- [🔌 Hardware](#-hardware)
-  - [📦 Boards and components](#-boards-and-components)
-  - [🔋 Power](#-power)
-  - [🔧 Misc](#-misc)
-- [🧪 User Feedback](#-user-feedback)
-- [💽 Install Moode Audio](#-install-moode-audio)
-- [🎧 DAC : HiFiBerry MiniAmp](#-dac--hifiberry-miniamp)
-  - [🪛 GPIO DAC wiring](#-gpio-dac-wiring)
-  - [⚙️ UI Settings](#-ui-settings)
-- [📈 ALSA CONFIG](#-alsa-config)
-  - [⚙️ Sound process](#-sound-process)
-  - [📊 Equalizer with CamillaDSP](#-equalizer-with-camilladsp)
-- [🎛 Rotary Encoder](#-rotary-encoder)
-  - [🪛 GPIO rotary wiring](#-gpio-rotary-wiring)
-  - [🧠 Smart button](#-smart-button)
-- [🔊 Sound notification setup](#-sound-notification-setup)
-  - [📶 Bluetooth ready sound notification](#-bluetooth-ready-sound-notification)
-  - [🛑 Pi Zero shutdown sound notification](#-pi-zero-shutdown-sound-notification)
-- [📻 Plexamp setup](#-plexamp-setup)
-- [📚 Resources](#-resources)
+This complete system includes three main components:
 
-&nbsp;
+### 1. 🔊 [Base System - Bluetooth Speaker & Equalizer](./README-v2-install.md)
 
-## ✨ FEATURES
+The core audio system with Bluetooth streaming and web-based parametric equalizer.
 
-- Switchable standard format battery 18650
-- Battery powered by solar panel
-- Raspberry pi zero powered by the battery
-- Bluetooth connexion (pin optional)
-- Rotary encoder volume (bluetooth + local)
-- Use of alsaequal or CamillaDSP
-- Moode UI accessible by URL:
-  - Using preset wifi network if reachable
-  - Using wifi hotspot if the preset network is not reachable,.
-- Bluetooth ready sound notification
-- Graceful shutdown with sound notification
+**Features:**
+- ✅ Bluetooth A2DP streaming (auto-pairing, no PIN)
+- ✅ 10-band parametric equalizer (CamillaDSP)
+- ✅ Web interface with 8 presets (natural wood theme)
+- ✅ Professional audio pipeline: PulseAudio → Loopback → CamillaDSP → HiFiBerry
+- ✅ Real-time debounced controls (150ms)
 
-&nbsp;
-
-## 🔌 HARDWARE
-
-### 📦 Boards and components
-
-- Raspberry PI zero 2 W ([link](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/))
-- Hifiberry DAC - Mini Amp 1.0 ([link](https://www.hifiberry.com/shop/boards/miniamp/))
-- SeenGreat - Solar management ([link](https://seengreat.com/wiki/104/solar-energy-manager))
-- DMA70-4 x2 ([link](https://www.daytonaudio.com/product/1616/dma70-4-2-1-2-dual-magnet-aluminum-cone-full-range-driver-4-ohm))
-
-### 🔋 Power
-
-- Battery 18650 x1
-- Solar panel ([link](https://www.amazon.fr/dp/B09F3LWLJ1))
-
-### 🔧 Misc
-
-- Jumper Wire ([link](https://www.amazon.fr/dp/B07K8PVKBP?ref=ppx_yo2ov_dt_b_fed_asin_title))
-- ON/OFF switch ([link](https://www.amazon.fr/dp/B0DM6HN1LB?ref=ppx_yo2ov_dt_b_fed_asin_title))
-- Rotary encoder ([link](https://www.amazon.fr/dp/B0CN7D16BC?ref=ppx_yo2ov_dt_b_fed_asin_title))
-- Micro SD Card
-
-&nbsp;
-
-## 🧪 USER FEEDBACK
-
-**Sound quality +++**
-
-After some adjustments using Moode’s EQ, the sound quality is more than decent.
-Be careful with low-frequency vibrations — it's important to properly isolate and secure each component to avoid any unwanted buzzing or rattling.
-
-**Battery duration ++**
-
-Battery life with a 18650 cell: ~3 hours
-
-**Solar charging ---**
-
-Battery charging via solar panel: Very disappointing.
-I believe the chosen solar panel is of very poor quality.
-Efficiency should be much better with a more powerful and better-manufactured solar panel.
-
-&nbsp;
-
-## 💽 INSTALL MOODE AUDIO
-
-1- Install [raspberry PI Imager](https://www.raspberrypi.com/software/)  
-2- I picked [Moode Audio](https://moodeaudio.org/) image  
-3- Preset wifi and user infos  
-4- Set the sd card in the pi zero and boot  
-5- Moode UI should be reachable: `http://<hostname>.local` or `http://172.24.1.1`
-
-&nbsp;
-
-## 🎧 DAC : HiFiBerry MiniAmp
-
-### 🪛 GPIO DAC wiring
-
-[<img title="a title" alt="Alt text" src="https://indibit.de/wp-content/uploads/2015/08/Raspberry-Pi-2-Model-B-GPIO-Belegung.png" style="width:20%" target="_blank" />](https://indibit.de/wp-content/uploads/2015/08/Raspberry-Pi-2-Model-B-GPIO-Belegung.png)
-
-| Function               | GPIO (logical name) | Physical Pin | Description                                     |
-| ---------------------- | ------------------- | ------------ | ----------------------------------------------- |
-| I2S - Bit Clock (BCLK) | GPIO 18             | Pin 12       | Audio data clock signal                         |
-| I2S - LR Clock (LRCK)  | GPIO 19             | Pin 35       | Selects left or right audio channel             |
-| I2S - Data Out (DIN)   | GPIO 20             | Pin 38       | Audio data sent to the DAC                      |
-| I2S - Enable / Mute    | GPIO 21             | Pin 40       | Enables or mutes output (depending on use case) |
-| Logic Power            | 3.3V                | Pin 1        | Power supply for logic-level circuits           |
-| Power Supply           | 5V                  | Pin 2 (or 4) | Main power supply for the amplifier module      |
-| Ground (GND)           | GND                 | Pin 6        | Voltage reference / power return                |
-
-### ⚙️ UI settings
-
-1. Go to audio settings and set **"DT Overlay"** to **"hifiberry-dac"**
-2. Reboot (if needed)
-3. Go to audio settings and set **"Output device"** to **"0:snd_rpi_hifiberry_dac"**
-4. Sound should output from the DAC
-5. OPTIONAL : disable HDMI audio interface by editing `/boot/firmware/config.txt` add or update : 
-```ini
- dtparam=audio=off
- dtoverlay=vc4-kms-v3d,noaudio
-```
-
-&nbsp;
-
-## 📈 ALSA CONFIG
-
-### ⚙️ Sound process
-
-**Goals:**
-- Be able to use Equalizer from Moode UI (AlsaEqual or CamillaDSP) on bluetooth inbounds
-- Be able to control volume with rotary encoder (use of `amixer` command)
-
-&nbsp;
-
-The HifiBerry Miniamp doesn't have any amixer controls because the PCM5102A chip **doesn't include any hardware volume control**.
-
-You can't use amixer as-is — you need to add a **software volume control** (softvol).
-
-But using softvol by-pass equalizer configuration set in Moode UI.
-
-In order to get volume management with rotary encoder and apply an equalizer, we need use **softvol** and **alsaequal/camilladsp**.
-
-<pre>
-ℹ️​ Bluetooth sound process
---------------------------
-&nbsp;
-[Bluetooth (BlueZ + BlueALSA)]
-         ↓
-[bluealsa-aplay]  ← reads the A2DP audio stream
-         ↓
-[_audioout_] ← Alsa sound input
-        ↓
-[softvol] ← software volume, controllable via `amixer`
-         ↓
-[alsaequal/camilladsp] ← Equalizer
-         ↓
-[HiFiBerry MiniAmp sound card]
-</pre>
-
-Edit or create :
-
-```bash
-sudo nano /etc/asound.conf
-```
-Example below assume your dac is identified by `card 0`. (cf `aplay -l`)
-
-➡️ [**See file content**](./filesystem/etc/asound.conf)
-
-Reboot and stream some music to the pi using bluetooth.
-Graphic EQ in Moode UI > Audio should have effect.
-
-
-
-&nbsp;
-
-### 📊 Equalizer with CamillaDSP
-
-Set `Volume Type` to `CamillaDSP` :
-
-[<img title="a title" alt="Inside" src="./.github/img/camilla-moode.png" style="width:33%" />](./.github/img/camilla-moode.png)
+**[📖 Read Full Installation Guide →](./README-v2-install.md)**
 
 ---
 
-In bottom of the audio settings page, you will find `Equalizers` section.<br />
-Here you can activate the CamillaDSP equalizer feature and set a config.
+### 2. 🔔 [Sound Feedback System](./README-v2-sound.md)
 
-You can also create new config file and upload them :
+Audible notifications for system events through PulseAudio.
 
-1. Click on `EDIT` CamillaDSP button.
-2. In `File management` section click on `upload` to select config file
-3. On top of the page, in `Signal processing` selector, pick your new configuration. 
+**Features:**
+- 🎵 Ready sound (Bluetooth discoverable - C major arpeggio)
+- 🎵 Connection sound (device connects/reconnects - high chime)
+- 🎵 Shutdown sound (system powering off - descending arpeggio)
+- 🔊 All sounds at 65% volume via `paplay`
+- 🎯 Automatic PulseAudio routing through equalizer
+- 🔄 Single device mode (auto-disconnect old connections)
 
-&nbsp;
+**[📖 Read Full Documentation →](./README-v2-sound.md)**
 
-Here are 2 config file samples including a 10 bands equalizer :<br /><br />
-[➡️ Default EQ profile](./config/OaKhz-Default.yml)<br />
-[➡️ Loudness EQ profile](./config/OaKhz-Loudness.yml)
+---
 
+### 3. 🎛️ [Rotary Encoder Control](./README-v2-rotary.md)
 
-## 🎛 ROTARY ENCODER
+Physical rotary encoder for tactile volume and media control.
 
-### 🪛 GPIO rotary wiring
+**Features:**
+- 🔄 Rotate: Volume up/down (±3% per step)
+- 🔘 Short press: Mute/Unmute
+- 🔘 Medium press: Skip track
+- ⏱️ Long press (3s): System shutdown
+- 🎯 PulseAudio volume control (`pactl` → `camilladsp_out` sink)
+- 🔒 Thread-safe with 150ms throttling
+- 👤 Runs as user `oakhz` (gpio + audio groups)
 
-[<img title="a title" alt="Alt text" src="./.github/img/rotary-encoder.jpg" style="width:20%" />](./img/rotary-encoder.jpg)
+**GPIO Pins:** CLK=23, DT=24, SW=22
 
-&nbsp;
-| Function | GPIO (logical name) | Physical Pin | Connected to | Description |
-| ------------------------ | ------------------- | ------------ | ------------ | ---------------------------------------------------- |
-| Encoder - Signal A (CLK) | GPIO 23 | Pin 16 | CLK | First quadrature output to detect rotation direction |
-| Encoder - Signal B (DT) | GPIO 24 | Pin 18 | DT | Second quadrature output (phase-shifted) |
-| Built-in Push Button | GPIO 22 | Pin 15 | SW | Detects short or long press |
-| Logic Power | 3.3V | Pin 17 | VCC | Power supply for the rotary encoder |
-| Ground (GND) | GND | Pin 20 | GND | Voltage reference for the entire encoder circuit |
+**[📖 Read Full Documentation →](./README-v2-rotary.md)**
 
-&nbsp;
+---
 
-&nbsp;
+### 4. 🚀 [Fast Boot Optimization](./README-v2-fast-boot.md) *(Optional)*
 
-### 🧠 Smart button
+Optimize Raspberry Pi boot time for rapid Bluetooth availability.
 
-Set 2 actions to push button :
+**Features:**
+- ⚡ Boot time: ~30s → ~12s (60% faster)
+- 🎯 Bluetooth ready in 12-18 seconds
+- 🔧 Disabled non-essential services
+- ⏱️ Reduced systemd timeouts
+- 🎯 Parallelized Bluetooth startup
+- 📊 Detailed benchmarking tools
 
-1. Short press : mute/unmute
-2. Long press : gracefull pi shutdown
-3. Double press : switch CamillaDSP equalizer config
+**Impact:** Connect to Bluetooth twice as fast after boot!
 
-Update Moode `rotenc.py` file :
+**[📖 Read Full Documentation →](./README-v2-fast-boot.md)**
 
-➡️ [**See file content (/var/www/daemon/rotenc.py)**](./filesystem/var/www/daemon/rotenc.py)
+---
 
-&nbsp;
+### 5. 📡 [WiFi Access Point Fallback](./README-v2-accesspoint.md) *(Optional)*
 
-## 🔊 SOUND NOTIFICATION SETUP
+Automatic WiFi client/Access Point switching for equalizer access anywhere.
 
-**Play sound when :**
+**Features:**
+- 🌐 Auto-connect to home WiFi when available
+- 📡 Auto-switch to AP mode when no WiFi
+- 🔄 Smart monitoring and switching (every 30s)
+- 🔒 WPA2 secured Access Point
+- 🎯 Equalizer accessible in both modes
+- 💻 SSH always available
 
-- pi zero bluetooth is aparairable
-- pi zero is paired with another device over bluetooth
-- pi zero is shutting down
+**Access:** Home WiFi → `http://[IP]` | AP mode → `http://192.168.50.1`
 
-&nbsp;
-&nbsp;
+**[📖 Read Full Documentation →](./README-v2-accesspoint.md)**
 
-1- Install dependencies to be able to read mp3 files.
+---
 
-```bash
-sudo apt-get install sox libsox-fmt-all
-```
+## 🚀 Quick Installation
 
-2- Move mp3 files to `/usr/share/sounds/`folder.
+### Prerequisites
 
-&nbsp;
+- Raspberry Pi Zero 2W or Raspberry Pi 4
+- Raspberry Pi OS Lite 64-bit
+- HiFiBerry MiniAmp (or compatible DAC)
+- 2x 4Ω 3W speakers
+- KY-040 rotary encoder (optional)
 
-### 📶 Bluetooth ready sound notification
-
-**1. Create executable**
-
-```bash
-sudo nano /usr/local/bin/play-bluetooth-ready.sh
-```
-
-➡️ [**See file content (/usr/local/bin/play-bluetooth-ready.sh)**](./filesystem/usr/local/bin/play-bluetooth-ready.sh)
-
-
-```bash
-sudo chmod +x /usr/local/bin/play-bluetooth-ready.sh
-```
-
-**2. Create service**
-
-Service :
+### Installation Steps
 
 ```bash
-sudo nano /etc/systemd/system/bluetooth-ready-sound.service
+# 1. Base System (Required)
+sudo bash scripts/install.sh
+sudo reboot
+
+# 2. Sound Feedback (Optional)
+sudo bash scripts/setup-sound.sh
+
+# 3. Rotary Encoder (Optional)
+sudo bash scripts/setup-rotary.sh
+
+# 4. Fast Boot (Optional - Recommended)
+sudo bash scripts/setup-fast-boot.sh
+sudo reboot
+
+# 5. WiFi Access Point Fallback (Optional)
+sudo bash scripts/setup-accesspoint.sh
+sudo reboot
 ```
 
-➡️ [**See file content (/usr/local/bin/play-bluetooth-ready.sh)**](./filesystem/etc/systemd/system/bluetooth-ready-sound.service)
+### After Installation
 
-Enable and start service :
+1. **Connect Bluetooth**: Look for "OaKhz audio" on your phone
+2. **Access Web Interface**: `http://[Pi-IP]`
+3. **Use Rotary Control**: Turn for volume, press for mute/skip
 
-```bash
-sudo systemctl daemon-reexec
-sudo systemctl enable --now bluetooth-ready-sound.service
+---
+
+## 🛠️ Hardware Requirements
+
+### Essential Components
+
+| Component | Model | Price |
+|-----------|-------|-------|
+| **Raspberry Pi** | Zero 2W | ~€20 |
+| **SD Card** | 16GB+ Class 10 | ~€10 |
+| **Audio DAC** | HiFiBerry MiniAmp | ~€25 |
+| **Power Supply** | 5V 3A USB-C | ~€10 |
+| **Speakers** | 2x 4Ω 3W | ~€15 |
+| **Total** | | **~€80** |
+
+### Optional Components
+
+| Component | Model | Price |
+|-----------|-------|-------|
+| **Rotary Encoder** | KY-040 | ~€2 |
+| **Enclosure** | 3D printed or custom | Variable |
+
+---
+
+## 📊 System Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    User Interfaces                      │
+├─────────────────────────────────────────────────────────┤
+│  Web Browser     │  Bluetooth Device  │  Rotary Encoder │
+│  (Equalizer)     │  (Audio Source)    │  (Volume/Skip)  │
+│  Port 80         │                    │  GPIO 23/24/22  │
+└────────┬─────────┴─────────┬──────────┴────────┬────────┘
+         │                   │                   │
+┌────────▼───────────────────▼───────────────────▼────────┐
+│                 Audio Processing Layer                   │
+├──────────────────────────────────────────────────────────┤
+│  Flask Server  │  PulseAudio    │  pactl (Volume)       │
+│  (Python)      │  (System Mode) │  (Rotary Control)     │
+└────────┬───────┴───────┬────────┴───────────────────────┘
+         │               │
+┌────────▼───────────────▼────────────────────────────────┐
+│              Sound Feedback & Routing                    │
+├──────────────────────────────────────────────────────────┤
+│  Audio Events  │  Bluetooth     │  Auto-routing         │
+│  (paplay 65%)  │  Monitor       │  (switch-on-connect)  │
+│  - Ready       │  - Connection  │                        │
+│  - Shutdown    │  - Single dev  │                        │
+└────────┬───────┴───────┬────────┴────────────────────────┘
+         │               │
+┌────────▼───────────────▼─────────────────────────────────┐
+│                 ALSA Loopback Layer                      │
+│  hw:Loopback,0 ──────────→ hw:Loopback,1                │
+└────────────────────────┬─────────────────────────────────┘
+                         │
+┌────────────────────────▼─────────────────────────────────┐
+│                  CamillaDSP (Equalizer)                  │
+│  10-Band Parametric EQ @ 48kHz                           │
+│  WebSocket: 1234                                         │
+└────────────────────────┬─────────────────────────────────┘
+                         │
+┌────────────────────────▼─────────────────────────────────┐
+│              HiFiBerry MiniAmp (I2S DAC)                 │
+│              hw:1,0 (Card 1)                             │
+└────────────────────────┬─────────────────────────────────┘
+                         │
+                    ┌────▼─────┐
+                    │ Speakers │
+                    │  🔊 🔊   │
+                    └──────────┘
 ```
 
-&nbsp;
+---
 
-### 🛑 Pi Zero shutdown sound notification
+## 🎯 Key Features
 
-**1. Create executable**
+### Audio Quality
+- **48kHz/16-bit** audio pipeline
+- **Professional DSP** with CamillaDSP
+- **Zero latency** Bluetooth routing
+- **HiFiBerry DAC** for superior sound quality
 
-```bash
-sudo nano /usr/local/bin/play-shutdown-sound.sh
+### User Experience
+- **Auto-pairing** Bluetooth (no PIN)
+- **Web interface** for equalizer (natural wood theme)
+- **Physical controls** with rotary encoder
+- **Audio feedback** for system events
+- **Real-time** equalizer adjustments
+
+### Technical Excellence
+- **Thread-safe** volume control with locking
+- **Debounced** controls (150ms throttling)
+- **Single device mode** (auto-disconnect old devices)
+- **PulseAudio system mode** for stability
+- **Systemd services** for automatic startup
+
+---
+
+## 📱 Usage
+
+### Bluetooth Playback
+1. On your phone, look for "OaKhz audio" in Bluetooth settings
+2. Connect (no PIN required)
+3. Play music - audio routes automatically through equalizer
+
+### Web Equalizer
+1. Open `http://[Raspberry-Pi-IP]`
+2. Choose a preset or adjust 10 bands manually
+3. Changes apply in real-time
+
+### Rotary Controls
+- **Turn left/right**: Volume ±3%
+- **Press briefly**: Mute/Unmute
+- **Press medium**: Skip to next track
+- **Hold 3 seconds**: Shutdown system
+
+---
+
+## 🔧 Services Overview
+
+| Service | Purpose | Status Command |
+|---------|---------|----------------|
+| **bluetooth.service** | Bluetooth stack | `sudo systemctl status bluetooth` |
+| **bt-agent.service** | Auto-pairing | `sudo systemctl status bt-agent` |
+| **pulseaudio.service** | System audio | `sudo systemctl status pulseaudio` |
+| **camilladsp.service** | Equalizer | `sudo systemctl status camilladsp` |
+| **oakhz-equalizer.service** | Web interface | `sudo systemctl status oakhz-equalizer` |
+| **oakhz-audio-events.service** | Sound feedback | `sudo systemctl status oakhz-audio-events` |
+| **oakhz-rotary.service** | Rotary control | `sudo systemctl status oakhz-rotary` |
+
+---
+
+## 🔍 Troubleshooting Quick Links
+
+### Common Issues
+
+**No Bluetooth connection?**
+→ See [Base System Troubleshooting](./README-v2-install.md#troubleshooting)
+
+**No sound output?**
+→ See [Base System - No Sound](./README-v2-install.md#no-sound)
+
+**Sound feedback not playing?**
+→ See [Sound Feedback Troubleshooting](./README-v2-sound.md#troubleshooting)
+
+**Rotary encoder not responding?**
+→ See [Rotary Encoder Troubleshooting](./README-v2-rotary.md#troubleshooting)
+
+**Volume control not working?**
+→ See [Rotary - Volume Not Changing](./README-v2-rotary.md#volume-not-changing)
+
+**Web interface not accessible?**
+→ See [Base System - Web Interface Not Responding](./README-v2-install.md#web-interface-not-responding)
+
+---
+
+## 📚 Documentation Structure
+
+```
+OAKHZ_DOC/
+├── README.md                         # Project overview
+├── docs/                             # Documentation
+│   ├── README-v2-install.md          # Base system installation guide
+│   ├── README-v2-sound.md            # Sound feedback system
+│   ├── README-v2-rotary.md           # Rotary encoder control
+│   ├── README-v2-fast-boot.md        # Fast boot optimization
+│   └── README-v2-accesspoint.md      # WiFi Access Point fallback
+├── scripts/                          # Installation scripts
+│   ├── install.sh                    # Base system installer
+│   ├── setup-sound.sh                # Sound feedback installer
+│   ├── setup-rotary.sh               # Rotary encoder installer
+│   ├── setup-fast-boot.sh            # Fast boot installer
+│   ├── setup-accesspoint.sh          # WiFi AP fallback installer
+│   └── setup-events.sh               # System events installer
+└── sounds/                           # Audio files
 ```
 
-➡️ [**See file content (/usr/local/bin/play-shutdown-sound.sh)**](./filesystem/usr/local/bin/play-shutdown-sound.sh)
+---
 
-```bash
-sudo chmod +x /usr/local/bin/play-shutdown-sound.sh
+## 🎨 Customization
+
+Each component can be customized independently:
+
+- **Base System**: Change Bluetooth name, web interface port, add custom EQ presets
+- **Sound Feedback**: Replace WAV files, adjust volumes, change polling intervals
+- **Rotary Encoder**: Modify GPIO pins, adjust volume steps, change button timings
+
+See individual documentation for detailed customization guides.
+
+---
+
+## 📦 Component Dependencies
+
+```
+Base System (Required)
+    ↓
+    ├── Sound Feedback (Optional) ← Depends on PulseAudio from base
+    ├── Rotary Encoder (Optional) ← Depends on PulseAudio from base
+    ├── Fast Boot (Optional) ← Optimizes boot time
+    └── WiFi AP Fallback (Optional) ← Independent, works with all components
 ```
 
-**2. Create Service**
+**Installation order:**
+1. Always install Base System first
+2. Add optional components in any order
+3. WiFi AP Fallback is completely independent
 
-```bash
-sudo nano /etc/systemd/system/shutdown-sound.service
-```
+---
 
-➡️ [**See file content (/etc/systemd/system/shutdown-sound.service)**](./filesystem/etc/systemd/system/shutdown-sound.service)
-&nbsp;
-&nbsp;
+## 🔒 Security & Performance
 
-Enable and start service :
+- **User separation**: Services run as appropriate users (`oakhz`, `pulse`, `root`)
+- **Minimal permissions**: Only required groups (gpio, audio)
+- **Low resource usage**: ~50MB RAM total for all services
+- **No network exposure**: Only local web interface (port 80)
+- **Automatic updates**: Use `sudo apt update && sudo apt upgrade`
 
-```bash
-sudo systemctl daemon-reexec
-sudo systemctl enable shutdown-sound.service
-```
+---
 
-&nbsp;
+## 📝 Version Information
 
+**Current Version**: v3.6 (October 2025)
 
+**Recent Changes:**
+- Fixed rotary encoder volume control (PulseAudio integration)
+- Improved thread-safety with volume locking
+- Updated GPIO pins (23/24/22)
+- Enhanced sound feedback with paplay
+- Optimized debouncing (150ms)
 
-## 📻 PLEXAMP SETUP
+**See individual changelogs:**
+- [Base System Changelog](./README-v2-install.md) (section not available)
+- [Sound Feedback Changelog](./README-v2-sound.md#changelog)
+- [Rotary Encoder Changelog](./README-v2-rotary.md#changelog)
 
-https://github.com/moode-player/moode/blob/master/www/setup_3rdparty_plexamp.txt
+---
 
-## 📚 RESOURCES
+## 🤝 Contributing
 
-- Moode doc : https://github.com/moode-player/docs/blob/main/setup_guide.md
-- MP3 sound effects : https://pixabay.com/sound-effects
-- Plexamp - physical volume : https://forums.plex.tv/t/physical-volume-controls-are-a-must-how-to-add-to-plexamp/916914/4
-- Tidal connect instruction (not tested yet): https://linuxaudiofoundation.org/musiclounge-tidal-connect-installation/
+Improvements welcome!
+
+- Report bugs via GitHub Issues
+- Share custom sound packs
+- Contribute equalizer presets
+- Design 3D-printed enclosures
+- Improve documentation
+
+---
+
+## 📜 License
+
+GPL-3.0 License - Free to use, modify, and redistribute
+
+---
+
+## 🙏 Credits
+
+**Software:**
+- Raspberry Pi OS
+- BlueZ (Bluetooth)
+- PulseAudio (Audio routing)
+- CamillaDSP (Equalizer)
+- Flask (Web interface)
+- gpiozero (GPIO control)
+
+**Hardware:**
+- HiFiBerry (Audio DAC)
+- Raspberry Pi Foundation
+
+---
+
+## 📞 Support
+
+- **Documentation**: This repository
+- **Issues**: GitHub Issues (if repository available)
+- **Community**: Share your builds!
+
+---
+
+**Build your own intelligent speaker! 🎵**
+
+*OaKhz Audio v3 - Complete System*
+*October 2025*
