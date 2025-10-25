@@ -31,7 +31,7 @@ cat > /usr/local/bin/oakhz-rotary.py << 'EOFPY'
 #!/usr/bin/env python3
 """
 OaKhz Audio - Rotary Encoder Controller
-Using gpiozero library with PulseAudio control
+Using gpiozero library (RPi.GPIO event detection doesn't work on this system)
 """
 from gpiozero import RotaryEncoder, Button
 import subprocess
@@ -43,7 +43,7 @@ import threading
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-program_version = "3.6"
+program_version = "4.0"
 
 # GPIO Configuration
 CLK_PIN = 23  # pin_a
@@ -59,9 +59,6 @@ VOLUME_STEP = 3
 THROTTLE_DELAY = 0.15  # 150ms between volume changes
 last_volume_change = 0
 volume_lock = threading.Lock()
-
-# Button state for mute/unmute
-last_volume = 50
 
 def get_volume():
     """Get current volume from PulseAudio camilladsp_out sink"""
@@ -127,9 +124,114 @@ def volume_down():
         if set_volume(new_vol):
             last_volume_change = now
 
+def get_bluetooth_device_path():
+    """Get the D-Bus path of the connected Bluetooth device"""
+    try:
+        result = subprocess.run(['bluetoothctl', 'devices', 'Connected'],
+                              capture_output=True, text=True, timeout=2)
+        for line in result.stdout.splitlines():
+            if 'Device' in line:
+                parts = line.split()
+                if len(parts) >= 2:
+                    mac = parts[1].replace(':', '_')
+                    return f"/org/bluez/hci0/dev_{mac}"
+        return None
+    except Exception:
+        return None
+
+def get_playback_status(device_path):
+    """Get current playback status (playing/paused/stopped)"""
+    try:
+        result = subprocess.run([
+            'dbus-send', '--system', '--print-reply',
+            '--dest=org.bluez',
+            f'{device_path}/player0',
+            'org.freedesktop.DBus.Properties.Get',
+            'string:org.bluez.MediaPlayer1',
+            'string:Status'
+        ], capture_output=True, text=True, timeout=2)
+
+        if result.returncode == 0:
+            for line in result.stdout.splitlines():
+                if 'variant' in line and 'string' in line:
+                    parts = line.strip().split('"')
+                    if len(parts) >= 2:
+                        return parts[1].lower()
+        return None
+    except Exception:
+        return None
+
+def bluetooth_play_pause():
+    """Toggle play/pause for Bluetooth media"""
+    try:
+        device_path = get_bluetooth_device_path()
+        if not device_path:
+            logger.warning("No Bluetooth device connected")
+            return False
+
+        # Get current status first to send the correct command
+        status = get_playback_status(device_path)
+
+        if status == 'playing':
+            # Currently playing, so pause
+            result = subprocess.run([
+                'dbus-send', '--system', '--type=method_call',
+                '--dest=org.bluez',
+                device_path,
+                'org.bluez.MediaControl1.Pause'
+            ], capture_output=True, timeout=2)
+            if result.returncode == 0:
+                logger.info("Pause command sent via BlueZ MediaControl1")
+                return True
+        else:
+            # Currently paused or stopped, so play
+            result = subprocess.run([
+                'dbus-send', '--system', '--type=method_call',
+                '--dest=org.bluez',
+                device_path,
+                'org.bluez.MediaControl1.Play'
+            ], capture_output=True, timeout=2)
+            if result.returncode == 0:
+                logger.info("Play command sent via BlueZ MediaControl1")
+                return True
+
+        logger.warning("Play/Pause command failed")
+        return False
+
+    except Exception as e:
+        logger.error(f"Play/Pause error: {e}")
+        return False
+
+def bluetooth_next():
+    """Skip to next track"""
+    try:
+        device_path = get_bluetooth_device_path()
+        if not device_path:
+            logger.warning("No Bluetooth device connected")
+            return False
+
+        # Use D-Bus to send AVRCP Next command via BlueZ MediaControl1
+        result = subprocess.run([
+            'dbus-send', '--system', '--type=method_call',
+            '--dest=org.bluez',
+            device_path,
+            'org.bluez.MediaControl1.Next'
+        ], capture_output=True, timeout=2)
+
+        if result.returncode == 0:
+            logger.info("Next track via BlueZ MediaControl1")
+            return True
+
+        logger.warning("Next track command failed")
+        return False
+
+    except Exception as e:
+        logger.error(f"Next track error: {e}")
+        return False
+
 def button_pressed():
-    """Handle button press - mute/unmute, skip, or shutdown"""
-    global last_volume, button
+    """Handle button press - play/pause, skip, or shutdown"""
+    global button
 
     press_start = time()
 
@@ -152,48 +254,15 @@ def button_pressed():
             pass
         subprocess.run(['sudo', 'shutdown', '-h', 'now'], check=False)
 
-    elif press_duration >= 0.3:
+    elif press_duration >= 1.0:
         # Medium press: skip track
-        logger.info("Medium press → Skip track")
-        try:
-            # Try playerctl first
-            result = subprocess.run(['playerctl', 'next'], capture_output=True, timeout=2)
-            if result.returncode == 0:
-                return
-
-            # Fallback: BlueZ dbus
-            result = subprocess.run(['bluetoothctl', 'devices', 'Connected'],
-                                  capture_output=True, text=True, timeout=2)
-            for line in result.stdout.splitlines():
-                if 'Device' in line:
-                    parts = line.split()
-                    if len(parts) >= 2:
-                        mac = parts[1].replace(':', '_')
-                        subprocess.run(['dbus-send', '--system', '--type=method_call',
-                                      '--dest=org.bluez', f'/org/bluez/hci0/dev_{mac}',
-                                      'org.bluez.MediaControl1.Next'],
-                                     capture_output=True, timeout=2)
-                        return
-        except Exception as e:
-            logger.error(f"Skip error: {e}")
+        logger.info("Medium press (≥1s) → Skip track")
+        bluetooth_next()
 
     else:
-        # Short press: mute/unmute
-        try:
-            current_vol = get_volume()
-
-            if current_vol > 1:
-                # Mute
-                last_volume = current_vol
-                set_volume(1)
-                logger.info(f"Muted (saved {last_volume}%)")
-            else:
-                # Unmute
-                restore_vol = last_volume if last_volume > 1 else 50
-                set_volume(restore_vol)
-                logger.info(f"Unmuted → {restore_vol}%")
-        except Exception as e:
-            logger.error(f"Mute/unmute error: {e}")
+        # Short press: play/pause
+        logger.info("Short press (<1s) → Play/Pause")
+        bluetooth_play_pause()
 
 def main():
     global button
@@ -225,10 +294,10 @@ def main():
     current_vol = get_volume()
     logger.info(f"Current volume: {current_vol}%")
     logger.info("Controls:")
-    logger.info("  🔄 Rotate:         Volume ±3%")
-    logger.info("  🔘 Short press:    Mute/Unmute")
-    logger.info("  🔘 Medium press:   Skip track")
-    logger.info("  ⏱️  Long press (3s): Shutdown")
+    logger.info("  🔄 Rotate:           Volume ±3%")
+    logger.info("  🔘 Short press (<1s): Play/Pause")
+    logger.info("  🔘 Medium press (1s): Skip track")
+    logger.info("  ⏱️  Long press (3s):  Shutdown")
     logger.info("=" * 50)
     logger.info("Rotary controller ready")
 
@@ -307,10 +376,10 @@ echo "  DT (Direction): GPIO $ROTARY_DT"
 echo "  SW (Button):    GPIO $ROTARY_SW"
 echo ""
 echo "Controls:"
-echo "  🔄 Rotate:          Volume up/down (±3% per step)"
-echo "  🔘 Single click:    Mute/Unmute"
-echo "  🔘 Medium press:    Skip to next track"
-echo "  ⏱️  Long press (3s): Shutdown system"
+echo "  🔄 Rotate:           Volume up/down (±3% per step)"
+echo "  🔘 Short press (<1s): Play/Pause"
+echo "  🔘 Medium press (1s): Skip to next track"
+echo "  ⏱️  Long press (3s):  Shutdown system"
 echo ""
 echo "Volume Control: PulseAudio (pactl → camilladsp_out sink)"
 echo "Service runs as: $SERVICE_USER (gpio + audio groups)"

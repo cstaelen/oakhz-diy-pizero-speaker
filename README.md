@@ -22,12 +22,15 @@ This complete system includes three main components:
 
 ### 1. 🔊 [Base System - Bluetooth Speaker & Equalizer](./docs/README-v2-install.md)
 
-The core audio system with Bluetooth streaming and web-based parametric equalizer.
+The core audio system with Bluetooth streaming and web-based parametric equalizer with media controls.
 
 **Features:**
 - ✅ Bluetooth A2DP streaming (auto-pairing, no PIN)
 - ✅ 10-band parametric equalizer (CamillaDSP)
+- ✅ **Preamp gain** (-12dB to +12dB master volume)
 - ✅ Web interface with 8 presets (natural wood theme)
+- ✅ **Media player controls** (Play/Pause/Next/Previous)
+- ✅ **Real-time metadata display** (Artist, Title, Album, Status)
 - ✅ Professional audio pipeline: PulseAudio → Loopback → CamillaDSP → HiFiBerry
 - ✅ Real-time debounced controls (150ms)
 
@@ -57,10 +60,11 @@ Physical rotary encoder for tactile volume and media control.
 
 **Features:**
 - 🔄 Rotate: Volume up/down (±3% per step)
-- 🔘 Short press: Mute/Unmute
-- 🔘 Medium press: Skip track
+- 🔘 **Short press (<1s): Play/Pause** (Bluetooth media control)
+- 🔘 Medium press (1s): Skip track
 - ⏱️ Long press (3s): System shutdown
-- 🎯 PulseAudio volume control (`pactl` → `camilladsp_out` sink)
+- 🎯 BlueZ MediaControl1 integration via D-Bus
+- 🎵 Smart play/pause toggle (checks current status)
 - 🔒 Thread-safe with 150ms throttling
 - 👤 Runs as user `oakhz` (gpio + audio groups)
 
@@ -229,14 +233,18 @@ sudo reboot
 
 ### User Experience
 - **Auto-pairing** Bluetooth (no PIN)
-- **Web interface** for equalizer (natural wood theme)
-- **Physical controls** with rotary encoder
+- **Web interface** with media player controls (natural wood theme)
+- **Real-time metadata display** (Artist, Title, Album, Status)
+- **Physical media controls** with rotary encoder (Play/Pause/Next)
 - **Audio feedback** for system events
 - **Real-time** equalizer adjustments
+- **Preamp master volume** control
 
 ### Technical Excellence
 - **Thread-safe** volume control with locking
 - **Debounced** controls (150ms throttling)
+- **BlueZ D-Bus integration** for media controls (MediaControl1 & MediaPlayer1)
+- **Smart play/pause toggle** (status-aware)
 - **Single device mode** (auto-disconnect old devices)
 - **PulseAudio system mode** for stability
 - **Systemd services** for automatic startup
@@ -250,15 +258,26 @@ sudo reboot
 2. Connect (no PIN required)
 3. Play music - audio routes automatically through equalizer
 
-### Web Equalizer
-1. Open `http://[Raspberry-Pi-IP]`
-2. Choose a preset or adjust 10 bands manually
-3. Changes apply in real-time
+### Web Interface
+1. Open `http://[Raspberry-Pi-IP]` or `http://oakhz.local`
+2. **Now Playing section** shows:
+   - 🎵 Current track (Artist, Title, Album)
+   - ⏯️ Playback status (Playing/Paused/Stopped)
+   - Auto-updates every 2 seconds
+3. **Media Controls**:
+   - ⏮ Previous track
+   - ▶️/⏸ Play/Pause (smart toggle)
+   - ⏭ Next track
+4. **Equalizer**:
+   - 10-band parametric EQ (-12dB to +12dB per band)
+   - Preamp master volume control (-12dB to +12dB)
+   - 8 presets: Flat, Rock, Pop, Jazz, Classical, Bass, Treble, Vocal
+   - Changes apply in real-time
 
 ### Rotary Controls
 - **Turn left/right**: Volume ±3%
-- **Press briefly**: Mute/Unmute
-- **Press medium**: Skip to next track
+- **Press briefly (<1s)**: **Play/Pause** Bluetooth media
+- **Press medium (1s)**: Skip to next track
 - **Hold 3 seconds**: Shutdown system
 
 ---
@@ -363,6 +382,22 @@ Base System (Required)
 
 ---
 
+## 📝 Changelog
+
+### v4.0 (October 2024) - Media Controls Update
+- ✨ **Added Bluetooth media controls** via BlueZ D-Bus (MediaControl1)
+- 🎵 **Rotary button**: Changed from Mute/Unmute to Play/Pause
+- 🌐 **Web interface**: Added Now Playing section with Artist/Title/Album display
+- 🎮 **Web controls**: Added Play/Pause, Next, Previous buttons
+- 🔊 **Preamp fix**: Master volume preamp now properly applied to CamillaDSP
+- 🔄 **Smart toggle**: Play/Pause checks current status before sending command
+- 📡 **Real-time updates**: Metadata refreshes every 2 seconds
+
+### v3.0 (October 2024)
+- Initial release with 10-band equalizer, rotary controls, and web interface
+
+---
+
 ## 📜 License
 
 GPL-3.0 License - Free to use, modify, and redistribute
@@ -373,7 +408,7 @@ GPL-3.0 License - Free to use, modify, and redistribute
 
 **Software:**
 - Raspberry Pi OS
-- BlueZ (Bluetooth)
+- BlueZ (Bluetooth + D-Bus media control)
 - PulseAudio (Audio routing)
 - CamillaDSP (Equalizer)
 - Flask (Web interface)
@@ -385,4 +420,4 @@ GPL-3.0 License - Free to use, modify, and redistribute
 
 ---
 
-*OaKhz Audio - *October 2025*
+*OaKhz Audio - v4.0 - October 2024*

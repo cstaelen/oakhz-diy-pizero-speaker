@@ -346,7 +346,6 @@ cd $INSTALL_DIR
 
 # Flask server
 cat > $INSTALL_DIR/eq_server.py << 'EOFPY'
-#!/usr/bin/env python3
 from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
 import subprocess
@@ -402,11 +401,31 @@ class EqualizerController:
             with open(CAMILLADSP_CONFIG, 'r') as f:
                 cdsp_config = yaml.safe_load(f)
 
-            # Met à jour les gains de chaque bande
+            # Met à jour ou crée le filtre preamp (gain global)
+            preamp_gain = self.config['preamp'] if self.config['enabled'] else 0.0
+            if 'preamp_gain' not in cdsp_config['filters']:
+                cdsp_config['filters']['preamp_gain'] = {
+                    'type': 'Gain',
+                    'parameters': {
+                        'gain': preamp_gain,
+                        'inverted': False
+                    }
+                }
+            else:
+                cdsp_config['filters']['preamp_gain']['parameters']['gain'] = preamp_gain
+
+            # Met à jour les gains de chaque bande EQ
             for i, band_name in enumerate(self.band_names):
                 gain = self.config['bands'][i] if self.config['enabled'] else 0.0
                 if band_name in cdsp_config['filters']:
                     cdsp_config['filters'][band_name]['parameters']['gain'] = gain
+
+            # Ajoute le preamp au début du pipeline s'il n'y est pas
+            if 'pipeline' in cdsp_config:
+                for channel_pipeline in cdsp_config['pipeline']:
+                    if 'names' in channel_pipeline:
+                        if 'preamp_gain' not in channel_pipeline['names']:
+                            channel_pipeline['names'].insert(0, 'preamp_gain')
 
             # Sauvegarde la config CamillaDSP
             with open(CAMILLADSP_CONFIG, 'w') as f:
@@ -435,8 +454,8 @@ class EqualizerController:
         try:
             self.config['preamp'] = value
             self.save_config()
-            # Le preamp pourrait être ajouté comme gain global si besoin
-            logger.info(f"Preamp set to {value} dB (saved)")
+            self.update_camilladsp()
+            logger.info(f"Preamp set to {value} dB")
             return True
         except Exception as e:
             logger.error(f"Preamp error: {e}")
@@ -492,7 +511,7 @@ def update_equalizer():
     data = request.json
     action_type = data.get('type')
     action_data = data.get('data')
-    
+
     success = False
     if action_type == 'band':
         success = eq.set_band(action_data['index'], action_data['value'])
@@ -502,7 +521,7 @@ def update_equalizer():
         success = eq.set_enabled(action_data['value'])
     elif action_type == 'preset':
         success = eq.apply_preset(action_data['name'])
-    
+
     if success:
         return jsonify({'status': 'ok', 'config': eq.get_config()})
     else:
@@ -523,9 +542,235 @@ def get_bluetooth_devices():
         logger.error(f"Bluetooth error: {e}")
         return jsonify({'devices': []}), 500
 
+def get_bluetooth_device_path():
+    """Get the D-Bus path of the connected Bluetooth device"""
+    try:
+        result = subprocess.run(['bluetoothctl', 'devices', 'Connected'],
+                              capture_output=True, text=True, timeout=2)
+        for line in result.stdout.splitlines():
+            if 'Device' in line:
+                parts = line.split()
+                if len(parts) >= 2:
+                    mac = parts[1].replace(':', '_')
+                    return f"/org/bluez/hci0/dev_{mac}"
+        return None
+    except Exception:
+        return None
+
+def get_dbus_property(device_path, interface, property_name):
+    """Get a D-Bus property value"""
+    try:
+        result = subprocess.run([
+            'dbus-send', '--system', '--print-reply',
+            '--dest=org.bluez',
+            f'{device_path}/player0',
+            'org.freedesktop.DBus.Properties.Get',
+            f'string:{interface}',
+            f'string:{property_name}'
+        ], capture_output=True, text=True, timeout=2)
+
+        if result.returncode == 0:
+            # Parse the output to extract the value
+            for line in result.stdout.splitlines():
+                if 'variant' in line or 'string' in line:
+                    # Extract value after the type
+                    parts = line.strip().split('"')
+                    if len(parts) >= 2:
+                        return parts[1]
+        return None
+    except Exception:
+        return None
+
+@app.route('/api/media/info', methods=['GET'])
+def get_media_info():
+    """Get current playing media metadata (artist, title, status)"""
+    try:
+        device_path = get_bluetooth_device_path()
+        if not device_path:
+            return jsonify({
+                'status': 'stopped',
+                'artist': 'No device connected',
+                'title': 'Connect a Bluetooth device',
+                'album': ''
+            })
+
+        # Get metadata via BlueZ D-Bus
+        info = {}
+
+        # Get status
+        status = get_dbus_property(device_path, 'org.bluez.MediaPlayer1', 'Status')
+        info['status'] = status.lower() if status else 'stopped'
+
+        # Get Track metadata (contains all track info)
+        result = subprocess.run([
+            'dbus-send', '--system', '--print-reply',
+            '--dest=org.bluez',
+            f'{device_path}/player0',
+            'org.freedesktop.DBus.Properties.Get',
+            'string:org.bluez.MediaPlayer1',
+            'string:Track'
+        ], capture_output=True, text=True, timeout=2)
+
+        # Parse the Track dictionary
+        info['artist'] = 'Unknown Artist'
+        info['title'] = 'Unknown Title'
+        info['album'] = ''
+
+        if result.returncode == 0:
+            lines = result.stdout.splitlines()
+            current_key = None
+            for line in lines:
+                line = line.strip()
+                if 'string "Title"' in line:
+                    current_key = 'title'
+                elif 'string "Artist"' in line:
+                    current_key = 'artist'
+                elif 'string "Album"' in line:
+                    current_key = 'album'
+                elif current_key and 'variant' in line and 'string "' in line:
+                    # Extract value between quotes
+                    parts = line.split('string "')
+                    if len(parts) >= 2:
+                        value = parts[1].rstrip('"')
+                        info[current_key] = value
+                        current_key = None
+
+        return jsonify(info)
+    except Exception as e:
+        logger.error(f"Media info error: {e}")
+        return jsonify({
+            'status': 'stopped',
+            'artist': 'Unknown Artist',
+            'title': 'No media playing',
+            'album': ''
+        })
+
+@app.route('/api/media/play', methods=['POST'])
+def media_play():
+    """Play media"""
+    try:
+        device_path = get_bluetooth_device_path()
+        if not device_path:
+            return jsonify({'status': 'error', 'message': 'No device connected'}), 400
+
+        subprocess.run([
+            'dbus-send', '--system', '--type=method_call',
+            '--dest=org.bluez',
+            device_path,
+            'org.bluez.MediaControl1.Play'
+        ], capture_output=True, timeout=2)
+        logger.info("Media: Play")
+        return jsonify({'status': 'ok'})
+    except Exception as e:
+        logger.error(f"Media play error: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/media/pause', methods=['POST'])
+def media_pause():
+    """Pause media"""
+    try:
+        device_path = get_bluetooth_device_path()
+        if not device_path:
+            return jsonify({'status': 'error', 'message': 'No device connected'}), 400
+
+        subprocess.run([
+            'dbus-send', '--system', '--type=method_call',
+            '--dest=org.bluez',
+            device_path,
+            'org.bluez.MediaControl1.Pause'
+        ], capture_output=True, timeout=2)
+        logger.info("Media: Pause")
+        return jsonify({'status': 'ok'})
+    except Exception as e:
+        logger.error(f"Media pause error: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/media/play-pause', methods=['POST'])
+def media_play_pause():
+    """Toggle play/pause"""
+    try:
+        device_path = get_bluetooth_device_path()
+        if not device_path:
+            return jsonify({'status': 'error', 'message': 'No device connected'}), 400
+
+        # Get current status first
+        status = get_dbus_property(device_path, 'org.bluez.MediaPlayer1', 'Status')
+
+        if status and status.lower() == 'playing':
+            # Currently playing, so pause
+            subprocess.run([
+                'dbus-send', '--system', '--type=method_call',
+                '--dest=org.bluez',
+                device_path,
+                'org.bluez.MediaControl1.Pause'
+            ], capture_output=True, timeout=2)
+            logger.info("Media: Pause")
+        else:
+            # Currently paused or stopped, so play
+            subprocess.run([
+                'dbus-send', '--system', '--type=method_call',
+                '--dest=org.bluez',
+                device_path,
+                'org.bluez.MediaControl1.Play'
+            ], capture_output=True, timeout=2)
+            logger.info("Media: Play")
+
+        return jsonify({'status': 'ok'})
+    except Exception as e:
+        logger.error(f"Media play-pause error: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/media/next', methods=['POST'])
+def media_next():
+    """Skip to next track"""
+    try:
+        device_path = get_bluetooth_device_path()
+        if not device_path:
+            return jsonify({'status': 'error', 'message': 'No device connected'}), 400
+
+        subprocess.run([
+            'dbus-send', '--system', '--type=method_call',
+            '--dest=org.bluez',
+            device_path,
+            'org.bluez.MediaControl1.Next'
+        ], capture_output=True, timeout=2)
+        logger.info("Media: Next track")
+        return jsonify({'status': 'ok'})
+    except Exception as e:
+        logger.error(f"Media next error: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/media/previous', methods=['POST'])
+def media_previous():
+    """Go to previous track"""
+    try:
+        device_path = get_bluetooth_device_path()
+        if not device_path:
+            return jsonify({'status': 'error', 'message': 'No device connected'}), 400
+
+        subprocess.run([
+            'dbus-send', '--system', '--type=method_call',
+            '--dest=org.bluez',
+            device_path,
+            'org.bluez.MediaControl1.Previous'
+        ], capture_output=True, timeout=2)
+        logger.info("Media: Previous track")
+        return jsonify({'status': 'ok'})
+    except Exception as e:
+        logger.error(f"Media previous error: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 @app.route('/')
 def home():
     return render_template('index.html')
+
+# Import WiFi management routes
+try:
+    from wifi_manager_routes import add_wifi_routes
+    add_wifi_routes(app)
+    logger.info("WiFi management interface enabled")
+except Exception as e:
+    logger.warning(f"WiFi management not available: {e}")
 
 if __name__ == '__main__':
     eq.apply_current_config()
@@ -571,6 +816,87 @@ cat > $INSTALL_DIR/templates/index.html << 'EOFHTML'
             margin-bottom: 24px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
         }
+
+        /* Media Player Styles */
+        .media-player {
+            margin-bottom: 24px;
+        }
+        .media-info {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: rgba(90, 74, 58, 0.3);
+            border-radius: 12px;
+        }
+        .media-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #f5f0e8;
+            margin-bottom: 8px;
+        }
+        .media-artist {
+            font-size: 1.1rem;
+            color: #d4c4b0;
+            margin-bottom: 4px;
+        }
+        .media-album {
+            font-size: 0.9rem;
+            color: #b8a894;
+        }
+        .media-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-top: 8px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .media-status.playing {
+            background: rgba(76, 175, 80, 0.3);
+            color: #4caf50;
+        }
+        .media-status.paused {
+            background: rgba(255, 193, 7, 0.3);
+            color: #ffc107;
+        }
+        .media-status.stopped {
+            background: rgba(158, 158, 158, 0.3);
+            color: #9e9e9e;
+        }
+        .media-controls {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+        .media-btn {
+            width: 56px;
+            height: 56px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            background: #5a4a3a;
+            color: #f5f0e8;
+        }
+        .media-btn:hover {
+            background: #6b5848;
+            transform: scale(1.05);
+        }
+        .media-btn.play-pause {
+            width: 72px;
+            height: 72px;
+            font-size: 1.8rem;
+            background: #8b6f47;
+        }
+        .media-btn.play-pause:hover {
+            background: #a58556;
+        }
+
         .controls-header {
             display: flex;
             justify-content: space-between;
@@ -748,9 +1074,33 @@ cat > $INSTALL_DIR/templates/index.html << 'EOFHTML'
     <div class="container">
         <header>
             <h1>🎵 OaKhz Audio</h1>
-            <p class="subtitle">Equalizer Controller</p>
+            <p class="subtitle">Equalizer & Media Controller</p>
         </header>
 
+        <!-- Media Player Card -->
+        <div class="card media-player">
+            <div class="controls-title" style="margin-bottom: 20px;">
+                <span>🎧</span>
+                <span>Now Playing</span>
+            </div>
+
+            <div class="media-info">
+                <div class="media-title" id="mediaTitle">No media playing</div>
+                <div class="media-artist" id="mediaArtist">Unknown Artist</div>
+                <div class="media-album" id="mediaAlbum"></div>
+                <span class="media-status stopped" id="mediaStatus">stopped</span>
+            </div>
+
+            <div class="media-controls">
+                <button class="media-btn" onclick="mediaPrevious()" title="Previous">⏮</button>
+                <button class="media-btn play-pause" onclick="mediaPlayPause()" title="Play/Pause">
+                    <span id="playPauseIcon">▶️</span>
+                </button>
+                <button class="media-btn" onclick="mediaNext()" title="Next">⏭</button>
+            </div>
+        </div>
+
+        <!-- Equalizer Card -->
         <div class="card">
             <div class="controls-header">
                 <div class="controls-title">
@@ -782,7 +1132,7 @@ cat > $INSTALL_DIR/templates/index.html << 'EOFHTML'
                     <label>Preamp</label>
                     <span class="preamp-value" id="preampValue">0 dB</span>
                 </div>
-                <input type="range" class="slider" id="preampSlider" min="-12" max="12" value="0" 
+                <input type="range" class="slider" id="preampSlider" min="-12" max="12" value="0"
                        oninput="updatePreamp(this.value)">
             </div>
 
@@ -798,7 +1148,7 @@ cat > $INSTALL_DIR/templates/index.html << 'EOFHTML'
         </div>
 
         <footer>
-            <p>OaKhz DIY Bluetooth Speaker</p>
+            <p>OaKhz DIY Bluetooth Speaker v4.0</p>
         </footer>
     </div>
 
@@ -819,7 +1169,60 @@ cat > $INSTALL_DIR/templates/index.html << 'EOFHTML'
         let currentPreset = 'flat';
         let bandValues = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         let debounceTimers = {};
+        let mediaUpdateInterval;
 
+        // Media Control Functions
+        function updateMediaInfo() {
+            fetch('/api/media/info')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('mediaTitle').textContent = data.title || 'No media playing';
+                    document.getElementById('mediaArtist').textContent = data.artist || 'Unknown Artist';
+                    document.getElementById('mediaAlbum').textContent = data.album || '';
+
+                    const statusEl = document.getElementById('mediaStatus');
+                    const playPauseIcon = document.getElementById('playPauseIcon');
+
+                    statusEl.className = 'media-status ' + (data.status || 'stopped');
+                    statusEl.textContent = data.status || 'stopped';
+
+                    if (data.status === 'playing') {
+                        playPauseIcon.textContent = '⏸';
+                    } else {
+                        playPauseIcon.textContent = '▶️';
+                    }
+                })
+                .catch(error => console.error('Error fetching media info:', error));
+        }
+
+        function mediaPlayPause() {
+            fetch('/api/media/play-pause', { method: 'POST' })
+                .then(response => response.json())
+                .then(() => {
+                    setTimeout(updateMediaInfo, 200);
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function mediaNext() {
+            fetch('/api/media/next', { method: 'POST' })
+                .then(response => response.json())
+                .then(() => {
+                    setTimeout(updateMediaInfo, 200);
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function mediaPrevious() {
+            fetch('/api/media/previous', { method: 'POST' })
+                .then(response => response.json())
+                .then(() => {
+                    setTimeout(updateMediaInfo, 200);
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Equalizer Functions
         function initBands() {
             const container = document.getElementById('bands');
             frequencies.forEach((freq, index) => {
@@ -827,9 +1230,9 @@ cat > $INSTALL_DIR/templates/index.html << 'EOFHTML'
                 band.className = 'band';
                 band.innerHTML = `
                     <div class="band-slider-container">
-                        <input type="range" class="slider band-slider" 
-                               id="band${index}" 
-                               min="-12" max="12" value="0" 
+                        <input type="range" class="slider band-slider"
+                               id="band${index}"
+                               min="-12" max="12" value="0"
                                oninput="updateBand(${index}, this.value)">
                         <div class="band-center-line"></div>
                     </div>
@@ -846,19 +1249,17 @@ cat > $INSTALL_DIR/templates/index.html << 'EOFHTML'
             currentPreset = 'custom';
             updatePresetButtons();
 
-            // Debounce: annule le timer précédent et en crée un nouveau
             if (debounceTimers[`band_${index}`]) {
                 clearTimeout(debounceTimers[`band_${index}`]);
             }
             debounceTimers[`band_${index}`] = setTimeout(() => {
                 sendToBackend('band', { index, value: parseInt(value) });
-            }, 150); // 150ms de délai
+            }, 150);
         }
 
         function updatePreamp(value) {
             document.getElementById('preampValue').textContent = `${value > 0 ? '+' : ''}${value} dB`;
 
-            // Debounce pour le preamp aussi
             if (debounceTimers.preamp) {
                 clearTimeout(debounceTimers.preamp);
             }
@@ -871,7 +1272,7 @@ cat > $INSTALL_DIR/templates/index.html << 'EOFHTML'
             enabled = !enabled;
             const btn = document.getElementById('powerBtn');
             const text = document.getElementById('powerText');
-            
+
             if (enabled) {
                 btn.classList.remove('off');
                 text.textContent = 'ON';
@@ -879,20 +1280,20 @@ cat > $INSTALL_DIR/templates/index.html << 'EOFHTML'
                 btn.classList.add('off');
                 text.textContent = 'OFF';
             }
-            
+
             sendToBackend('enabled', { value: enabled });
         }
 
         function applyPreset(presetName) {
             currentPreset = presetName;
             const values = presets[presetName];
-            
+
             values.forEach((value, index) => {
                 bandValues[index] = value;
                 document.getElementById(`band${index}`).value = value;
                 document.getElementById(`bandValue${index}`).textContent = value > 0 ? `+${value}` : value;
             });
-            
+
             updatePresetButtons();
             sendToBackend('preset', { name: presetName });
         }
@@ -931,27 +1332,32 @@ cat > $INSTALL_DIR/templates/index.html << 'EOFHTML'
                 .then(config => {
                     enabled = config.enabled;
                     currentPreset = config.preset;
-                    
+
                     if (!enabled) {
                         document.getElementById('powerBtn').classList.add('off');
                         document.getElementById('powerText').textContent = 'OFF';
                     }
-                    
+
                     config.bands.forEach((value, index) => {
                         document.getElementById(`band${index}`).value = value;
                         document.getElementById(`bandValue${index}`).textContent = value > 0 ? `+${value}` : value;
                     });
-                    
+
                     document.getElementById('preampSlider').value = config.preamp;
                     document.getElementById('preampValue').textContent = `${config.preamp > 0 ? '+' : ''}${config.preamp} dB`;
-                    
+
                     updatePresetButtons();
                 })
                 .catch(error => console.error('Error loading config:', error));
         }
 
+        // Initialize
         initBands();
         loadConfig();
+        updateMediaInfo();
+
+        // Update media info every 2 seconds
+        mediaUpdateInterval = setInterval(updateMediaInfo, 2000);
     </script>
 </body>
 </html>
