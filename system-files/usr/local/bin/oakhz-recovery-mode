@@ -1,0 +1,24 @@
+#!/bin/bash
+# OaKhz Recovery Mode
+# Check if WiFi client mode should be enabled instead of AP mode
+
+RECOVERY_FILE="/boot/firmware/enable-wifi-client"
+
+if [ -f "$RECOVERY_FILE" ]; then
+    echo "Recovery mode detected: enabling WiFi client mode"
+
+    # Stop AP services
+    systemctl stop hostapd 2>/dev/null || true
+    systemctl stop dnsmasq 2>/dev/null || true
+
+    # Flush wlan0 IP
+    ip addr flush dev wlan0 2>/dev/null || true
+
+    # Start NetworkManager
+    systemctl start NetworkManager
+
+    echo "WiFi client mode enabled. NetworkManager will connect to saved networks."
+    echo "To return to AP mode, remove $RECOVERY_FILE and reboot."
+else
+    echo "Normal mode: AP mode will start"
+fi

@@ -1,0 +1,577 @@
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OaKhz Audio - Equalizer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #e8d0b8 0%, #d8c0a8 50%, #e0cab0 100%);
+            color: #f5f0e8;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 40px; }
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #5d4037 0%, #4a3728 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        .subtitle { color: #b8a894; font-size: 1rem; }
+        .card {
+            background: linear-gradient(135deg, #2d2520 0%, #3d3530 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid #6b5848;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Media Player Styles */
+        .media-player {
+            margin-bottom: 24px;
+        }
+        .media-info {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: rgba(90, 74, 58, 0.3);
+            border-radius: 12px;
+        }
+        .media-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #f5f0e8;
+            margin-bottom: 8px;
+        }
+        .media-artist {
+            font-size: 1.1rem;
+            color: #d4c4b0;
+            margin-bottom: 4px;
+        }
+        .media-album {
+            font-size: 0.9rem;
+            color: #b8a894;
+        }
+        .media-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-top: 8px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .media-status.playing {
+            background: rgba(76, 175, 80, 0.3);
+            color: #4caf50;
+        }
+        .media-status.paused {
+            background: rgba(255, 193, 7, 0.3);
+            color: #ffc107;
+        }
+        .media-status.stopped {
+            background: rgba(158, 158, 158, 0.3);
+            color: #9e9e9e;
+        }
+        .media-controls {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+        .media-btn {
+            width: 56px;
+            height: 56px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            background: #5a4a3a;
+            color: #f5f0e8;
+        }
+        .media-btn:hover {
+            background: #6b5848;
+            transform: scale(1.05);
+        }
+        .media-btn.play-pause {
+            width: 72px;
+            height: 72px;
+            font-size: 1.8rem;
+            background: #8b6f47;
+        }
+        .media-btn.play-pause:hover {
+            background: #a58556;
+        }
+
+        .controls-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .controls-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-power { background: #8b6f47; }
+        .btn-power:hover { background: #a58556; }
+        .btn-power.off { background: #5a4a3a; }
+        .btn-power.off:hover { background: #6b5848; }
+        .presets { margin-bottom: 24px; }
+        .presets label {
+            display: block;
+            font-size: 0.9rem;
+            color: #d4c4b0;
+            margin-bottom: 12px;
+        }
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+        }
+        .preset-btn {
+            padding: 10px 16px;
+            background: #5a4a3a;
+            border: none;
+            border-radius: 8px;
+            color: #f5f0e8;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: capitalize;
+        }
+        .preset-btn:hover { background: #6b5848; }
+        .preset-btn.active { background: #a58556; }
+        .preset-btn.active:hover { background: #b89660; }
+        .preamp-control { margin-bottom: 24px; }
+        .preamp-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .preamp-value {
+            font-family: 'Courier New', monospace;
+            background: #5a4a3a;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: #f5f0e8;
+        }
+        .slider {
+            width: 100%;
+            height: 8px;
+            background: #5a4a3a;
+            border-radius: 4px;
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #c89860;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(200, 152, 96, 0.5);
+        }
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #c89860;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+        .slider:disabled::-webkit-slider-thumb {
+            background: #7a6a5a;
+            box-shadow: none;
+        }
+        .btn-reset {
+            width: 100%;
+            background: #5a4a3a;
+            color: #f5f0e8;
+            justify-content: center;
+        }
+        .btn-reset:hover { background: #6b5848; }
+        .equalizer { padding: 24px; }
+        .eq-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+        .bands {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 16px;
+        }
+        .band {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .band-slider-container {
+            position: relative;
+            width: 48px;
+            height: 192px;
+            background: #5a4a3a;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        .band-slider {
+            position: absolute;
+            width: 192px;
+            height: 48px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-90deg);
+            transform-origin: center;
+        }
+        .band-center-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #6b5848;
+            pointer-events: none;
+        }
+        .band-value {
+            font-family: 'Courier New', monospace;
+            background: #5a4a3a;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            margin-bottom: 4px;
+            color: #f5f0e8;
+        }
+        .band-label {
+            font-size: 0.7rem;
+            color: #b8a894;
+            text-align: center;
+        }
+        footer {
+            text-align: center;
+            margin-top: 24px;
+            color: #8a7a6a;
+            font-size: 0.85rem;
+        }
+        @media (max-width: 768px) {
+            .bands { grid-template-columns: repeat(5, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎵 OaKhz Audio 🔊</h1>
+        </header>
+
+        <!-- Media Player Card -->
+        <div class="card media-player">
+            <div class="controls-title" style="margin-bottom: 20px;">
+                <span>🎧</span>
+                <span>Now Playing</span>
+            </div>
+
+            <div class="media-info">
+                <div class="media-title" id="mediaTitle">No media playing</div>
+                <div class="media-artist" id="mediaArtist">Unknown Artist</div>
+                <div class="media-album" id="mediaAlbum"></div>
+                <span class="media-status stopped" id="mediaStatus">stopped</span>
+            </div>
+
+            <div class="media-controls">
+                <button class="media-btn" onclick="mediaPrevious()" title="Previous">⏮</button>
+                <button class="media-btn play-pause" onclick="mediaPlayPause()" title="Play/Pause">
+                    <span id="playPauseIcon">▶️</span>
+                </button>
+                <button class="media-btn" onclick="mediaNext()" title="Next">⏭</button>
+            </div>
+        </div>
+
+        <!-- Equalizer Card -->
+        <div class="card">
+            <div class="controls-header">
+                <div class="controls-title">
+                    <span>🔊</span>
+                    <span>Equalizer Status</span>
+                </div>
+                <button class="btn btn-power" id="powerBtn" onclick="togglePower()">
+                    <span>⚡</span>
+                    <span id="powerText">ON</span>
+                </button>
+            </div>
+
+            <div class="presets">
+                <label>Presets</label>
+                <div class="preset-grid">
+                    <button class="preset-btn active" onclick="applyPreset('flat')">Flat</button>
+                    <button class="preset-btn" onclick="applyPreset('rock')">Rock</button>
+                    <button class="preset-btn" onclick="applyPreset('pop')">Pop</button>
+                    <button class="preset-btn" onclick="applyPreset('jazz')">Jazz</button>
+                    <button class="preset-btn" onclick="applyPreset('classical')">Classical</button>
+                    <button class="preset-btn" onclick="applyPreset('bass')">Bass</button>
+                    <button class="preset-btn" onclick="applyPreset('treble')">Treble</button>
+                    <button class="preset-btn" onclick="applyPreset('vocal')">Vocal</button>
+                </div>
+            </div>
+
+            <div class="preamp-control">
+                <div class="preamp-header">
+                    <label>Preamp</label>
+                    <span class="preamp-value" id="preampValue">0 dB</span>
+                </div>
+                <input type="range" class="slider" id="preampSlider" min="-12" max="12" value="0"
+                       oninput="updatePreamp(this.value)">
+            </div>
+
+            <button class="btn btn-reset" onclick="resetEqualizer()">
+                <span>🔄</span>
+                <span>Reset to Flat</span>
+            </button>
+        </div>
+
+        <div class="card equalizer">
+            <h2 class="eq-title">10-Band Equalizer</h2>
+            <div class="bands" id="bands"></div>
+        </div>
+
+        <footer>
+        </footer>
+    </div>
+
+    <script>
+        const frequencies = ['32 Hz', '64 Hz', '125 Hz', '250 Hz', '500 Hz', '1 kHz', '2 kHz', '4 kHz', '8 kHz', '16 kHz'];
+        const presets = {
+            flat: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            rock: [5, 4, -2, -3, -1, 2, 4, 5, 5, 5],
+            pop: [-1, 3, 4, 4, 2, -1, -2, -2, -1, -1],
+            jazz: [4, 3, 1, 2, -1, -1, 0, 1, 2, 3],
+            classical: [5, 4, 3, 2, -1, -1, 0, 2, 3, 4],
+            bass: [6, 5, 4, 2, 0, -1, -2, -3, -3, -3],
+            treble: [-3, -3, -2, -1, 0, 2, 4, 5, 6, 6],
+            vocal: [-2, -3, -2, 1, 3, 3, 2, 1, 0, -1]
+        };
+
+        let enabled = true;
+        let currentPreset = 'flat';
+        let bandValues = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let debounceTimers = {};
+        let mediaUpdateInterval;
+
+        // Media Control Functions
+        function updateMediaInfo() {
+            fetch('/api/media/info')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('mediaTitle').textContent = data.title || 'No media playing';
+                    document.getElementById('mediaArtist').textContent = data.artist || 'Unknown Artist';
+                    document.getElementById('mediaAlbum').textContent = data.album || '';
+
+                    const statusEl = document.getElementById('mediaStatus');
+                    const playPauseIcon = document.getElementById('playPauseIcon');
+
+                    statusEl.className = 'media-status ' + (data.status || 'stopped');
+                    statusEl.textContent = data.status || 'stopped';
+
+                    if (data.status === 'playing') {
+                        playPauseIcon.textContent = '⏸';
+                    } else {
+                        playPauseIcon.textContent = '▶️';
+                    }
+                })
+                .catch(error => console.error('Error fetching media info:', error));
+        }
+
+        function mediaPlayPause() {
+            fetch('/api/media/play-pause', { method: 'POST' })
+                .then(response => response.json())
+                .then(() => {
+                    setTimeout(updateMediaInfo, 200);
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function mediaNext() {
+            fetch('/api/media/next', { method: 'POST' })
+                .then(response => response.json())
+                .then(() => {
+                    setTimeout(updateMediaInfo, 200);
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function mediaPrevious() {
+            fetch('/api/media/previous', { method: 'POST' })
+                .then(response => response.json())
+                .then(() => {
+                    setTimeout(updateMediaInfo, 200);
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Equalizer Functions
+        function initBands() {
+            const container = document.getElementById('bands');
+            frequencies.forEach((freq, index) => {
+                const band = document.createElement('div');
+                band.className = 'band';
+                band.innerHTML = `
+                    <div class="band-slider-container">
+                        <input type="range" class="slider band-slider"
+                               id="band${index}"
+                               min="-12" max="12" value="0"
+                               oninput="updateBand(${index}, this.value)">
+                        <div class="band-center-line"></div>
+                    </div>
+                    <span class="band-value" id="bandValue${index}">0</span>
+                    <span class="band-label">${freq}</span>
+                `;
+                container.appendChild(band);
+            });
+        }
+
+        function updateBand(index, value) {
+            bandValues[index] = parseInt(value);
+            document.getElementById(`bandValue${index}`).textContent = value > 0 ? `+${value}` : value;
+            currentPreset = 'custom';
+            updatePresetButtons();
+
+            if (debounceTimers[`band_${index}`]) {
+                clearTimeout(debounceTimers[`band_${index}`]);
+            }
+            debounceTimers[`band_${index}`] = setTimeout(() => {
+                sendToBackend('band', { index, value: parseInt(value) });
+            }, 150);
+        }
+
+        function updatePreamp(value) {
+            document.getElementById('preampValue').textContent = `${value > 0 ? '+' : ''}${value} dB`;
+
+            if (debounceTimers.preamp) {
+                clearTimeout(debounceTimers.preamp);
+            }
+            debounceTimers.preamp = setTimeout(() => {
+                sendToBackend('preamp', { value: parseInt(value) });
+            }, 150);
+        }
+
+        function togglePower() {
+            enabled = !enabled;
+            const btn = document.getElementById('powerBtn');
+            const text = document.getElementById('powerText');
+
+            if (enabled) {
+                btn.classList.remove('off');
+                text.textContent = 'ON';
+            } else {
+                btn.classList.add('off');
+                text.textContent = 'OFF';
+            }
+
+            sendToBackend('enabled', { value: enabled });
+        }
+
+        function applyPreset(presetName) {
+            currentPreset = presetName;
+            const values = presets[presetName];
+
+            values.forEach((value, index) => {
+                bandValues[index] = value;
+                document.getElementById(`band${index}`).value = value;
+                document.getElementById(`bandValue${index}`).textContent = value > 0 ? `+${value}` : value;
+            });
+
+            updatePresetButtons();
+            sendToBackend('preset', { name: presetName });
+        }
+
+        function updatePresetButtons() {
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                if (btn.textContent.toLowerCase() === currentPreset) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        function resetEqualizer() {
+            applyPreset('flat');
+            document.getElementById('preampSlider').value = 0;
+            document.getElementById('preampValue').textContent = '0 dB';
+        }
+
+        function sendToBackend(type, data) {
+            fetch('/api/equalizer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type, data })
+            })
+            .then(response => response.json())
+            .then(data => console.log('Success:', data))
+            .catch(error => console.error('Error:', error));
+        }
+
+        function loadConfig() {
+            fetch('/api/equalizer')
+                .then(response => response.json())
+                .then(config => {
+                    enabled = config.enabled;
+                    currentPreset = config.preset;
+
+                    if (!enabled) {
+                        document.getElementById('powerBtn').classList.add('off');
+                        document.getElementById('powerText').textContent = 'OFF';
+                    }
+
+                    config.bands.forEach((value, index) => {
+                        document.getElementById(`band${index}`).value = value;
+                        document.getElementById(`bandValue${index}`).textContent = value > 0 ? `+${value}` : value;
+                    });
+
+                    document.getElementById('preampSlider').value = config.preamp;
+                    document.getElementById('preampValue').textContent = `${config.preamp > 0 ? '+' : ''}${config.preamp} dB`;
+
+                    updatePresetButtons();
+                })
+                .catch(error => console.error('Error loading config:', error));
+        }
+
+        // Initialize
+        initBands();
+        loadConfig();
+        updateMediaInfo();
+
+        // Update media info every 2 seconds
+        mediaUpdateInterval = setInterval(updateMediaInfo, 2000);
+    </script>
+</body>
+</html>

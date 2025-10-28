@@ -1,0 +1,14 @@
+[Unit]
+Description=OaKhz Shutdown Sound
+DefaultDependencies=no
+Before=shutdown.target reboot.target halt.target
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/local/bin/oakhz-shutdown-sound.sh
+TimeoutStartSec=10
+RemainAfterExit=yes
+
+[Install]
+WantedBy=halt.target reboot.target shutdown.target

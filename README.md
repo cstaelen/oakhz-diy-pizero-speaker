@@ -20,25 +20,43 @@ This educational project aims to build a prototype of a Bluetooth speaker that i
 
 This complete system includes three main components:
 
-### 1. 🔊 [Base System - Bluetooth Speaker & Equalizer](./docs/README-v2-install.md)
+### 1. 🔊 [Base System - Bluetooth Speaker](./docs/README-v2-install.md) *(Required)*
 
-The core audio system with Bluetooth streaming and web-based parametric equalizer with media controls.
+The core audio system with Bluetooth streaming and CamillaDSP parametric equalizer.
 
 **Features:**
 - ✅ Bluetooth A2DP streaming (auto-pairing, no PIN)
-- ✅ 10-band parametric equalizer (CamillaDSP)
-- ✅ **Preamp gain** (-12dB to +12dB master volume)
-- ✅ Web interface with 8 presets (natural wood theme)
-- ✅ **Media player controls** (Play/Pause/Next/Previous)
-- ✅ **Real-time metadata display** (Artist, Title, Album, Status)
-- ✅ Professional audio pipeline: PulseAudio → Loopback → CamillaDSP → HiFiBerry
-- ✅ Real-time debounced controls (150ms)
+- ✅ 10-band parametric equalizer (CamillaDSP 48kHz)
+- ✅ Professional audio pipeline: Bluetooth → PulseAudio → Loopback → CamillaDSP → HiFiBerry DAC
+- ✅ ALSA loopback for flexible routing
+- ✅ Automatic device pairing (NoInputNoOutput)
+- ✅ Hostname: "OaKhz audio" (visible via Bluetooth)
 
 **[📖 Read Full Installation Guide →](./docs/README-v2-install.md)**
 
 ---
 
-### 2. 🔔 [Sound Feedback System](./docs/README-v2-sound.md)
+### 2. 🎛️ [Web Equalizer Interface](./docs/README-v2-equalizer.md) *(Optional)*
+
+Web-based control panel for CamillaDSP equalizer with real-time adjustments.
+
+**Features:**
+- 🌐 Web interface accessible from any device
+- 🎚️ 10-band parametric EQ with visual feedback
+- 💾 Preset management (save/load custom configurations)
+- ⚡ Real-time updates via WebSocket
+- 📊 Frequency response graph
+- 📱 Mobile-responsive design (warm wood theme)
+- 🎵 Media player controls (Play/Pause/Next/Previous)
+- 📻 Real-time metadata display (Artist, Title, Album, Status)
+
+**Access:** `http://[raspberry-pi-ip]` or `http://192.168.50.1` (AP mode)
+
+**[📖 Read Full Documentation →](./docs/README-v2-equalizer.md)**
+
+---
+
+### 3. 🔔 [Sound Feedback System](./docs/README-v2-sound.md) *(Optional)*
 
 Audible notifications for system events through PulseAudio.
 
@@ -54,7 +72,7 @@ Audible notifications for system events through PulseAudio.
 
 ---
 
-### 3. 🎛️ [Rotary Encoder Control](./docs/README-v2-rotary.md)
+### 4. 🎛️ [Rotary Encoder Control](./docs/README-v2-rotary.md) *(Optional)*
 
 Physical rotary encoder for tactile volume and media control.
 
@@ -71,24 +89,6 @@ Physical rotary encoder for tactile volume and media control.
 **GPIO Pins:** CLK=23, DT=24, SW=22
 
 **[📖 Read Full Documentation →](./docs/README-v2-rotary.md)**
-
----
-
-### 4. 🚀 [Fast Boot Optimization](./docs/README-v2-fast-boot.md) *(Optional)*
-
-Optimize Raspberry Pi boot time for rapid Bluetooth availability.
-
-**Features:**
-- ⚡ Boot time: ~30s → ~12s (60% faster)
-- 🎯 Bluetooth ready in 12-18 seconds
-- 🔧 Disabled non-essential services
-- ⏱️ Reduced systemd timeouts
-- 🎯 Parallelized Bluetooth startup
-- 📊 Detailed benchmarking tools
-
-**Impact:** Connect to Bluetooth twice as fast after boot!
-
-**[📖 Read Full Documentation →](./docs/README-v2-fast-boot.md)**
 
 ---
 
@@ -127,15 +127,14 @@ Automatic WiFi client/Access Point switching for equalizer access anywhere.
 sudo bash scripts/install.sh
 sudo reboot
 
-# 2. Sound Feedback (Optional)
+# 2. Web Equalizer Interface (Optional)
+sudo bash scripts/setup-equalizer.sh
+
+# 3. Sound Feedback (Optional)
 sudo bash scripts/setup-sound.sh
 
-# 3. Rotary Encoder (Optional)
+# 4. Rotary Encoder (Optional)
 sudo bash scripts/setup-rotary.sh
-
-# 4. Fast Boot (Optional - Recommended)
-sudo bash scripts/setup-fast-boot.sh
-sudo reboot
 
 # 5. WiFi Access Point Fallback (Optional)
 sudo bash scripts/setup-accesspoint.sh
@@ -145,8 +144,8 @@ sudo reboot
 ### After Installation
 
 1. **Connect Bluetooth**: Look for "OaKhz audio" on your phone
-2. **Access Web Interface**: `http://[Pi-IP]`
-3. **Use Rotary Control**: Turn for volume, press for mute/skip
+2. **Access Web Interface** *(if equalizer installed)*: `http://[Pi-IP]`
+3. **Use Rotary Control** *(if rotary installed)*: Turn for volume, press for play/pause/skip
 
 ---
 
@@ -316,7 +315,7 @@ sudo reboot
 → See [Rotary - Volume Not Changing](./docs/README-v2-rotary.md#volume-not-changing)
 
 **Web interface not accessible?**
-→ See [Base System - Web Interface Not Responding](./docs/README-v2-install.md#web-interface-not-responding)
+→ See [Web Equalizer Troubleshooting](./docs/README-v2-equalizer.md#troubleshooting)
 
 ---
 
@@ -327,16 +326,16 @@ OAKHZ_DOC/
 ├── README.md                         # Project overview
 ├── docs/                             # Documentation
 │   ├── README-v2-install.md          # Base system installation guide
+│   ├── README-v2-equalizer.md        # Web equalizer interface
 │   ├── README-v2-sound.md            # Sound feedback system
 │   ├── README-v2-rotary.md           # Rotary encoder control
-│   ├── README-v2-fast-boot.md        # Fast boot optimization
 │   └── README-v2-accesspoint.md      # WiFi Access Point fallback
 ├── scripts/                          # Installation scripts
 │   ├── install.sh                    # Base system installer
+│   ├── setup-equalizer.sh            # Web equalizer installer
 │   ├── setup-sound.sh                # Sound feedback installer
 │   ├── setup-rotary.sh               # Rotary encoder installer
-│   ├── setup-fast-boot.sh            # Fast boot installer
-│   └── setup-accesspoint.sh          # WiFi AP events installer
+│   └── setup-accesspoint.sh          # WiFi AP installer
 └── sounds/                           # Audio files
 ```
 
@@ -346,7 +345,8 @@ OAKHZ_DOC/
 
 Each component can be customized independently:
 
-- **Base System**: Change Bluetooth name, web interface port, add custom EQ presets
+- **Base System**: Change Bluetooth name, adjust CamillaDSP config
+- **Web Equalizer**: Customize web UI theme, add custom presets, change port
 - **Sound Feedback**: Replace WAV files, adjust volumes, change polling intervals
 - **Rotary Encoder**: Modify GPIO pins, adjust volume steps, change button timings
 
@@ -359,9 +359,9 @@ See individual documentation for detailed customization guides.
 ```
 Base System (Required)
     ↓
+    ├── Web Equalizer (Optional) ← Depends on CamillaDSP from base
     ├── Sound Feedback (Optional) ← Depends on PulseAudio from base
     ├── Rotary Encoder (Optional) ← Depends on PulseAudio from base
-    ├── Fast Boot (Optional) ← Optimizes boot time
     └── WiFi AP Fallback (Optional) ← Independent, works with all components
 ```
 

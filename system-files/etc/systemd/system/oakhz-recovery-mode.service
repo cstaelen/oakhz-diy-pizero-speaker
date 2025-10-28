@@ -1,0 +1,14 @@
+[Unit]
+Description=OaKhz Recovery Mode Checker
+Before=wlan0-ap.service hostapd.service dnsmasq.service NetworkManager.service
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/oakhz-recovery-mode
+RemainAfterExit=yes
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,13 @@
+[Unit]
+Description=Configure wlan0 for Access Point mode
+Before=hostapd.service dnsmasq.service
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/ip addr flush dev wlan0
+ExecStart=/sbin/ip addr add 192.168.50.1/24 dev wlan0
+ExecStart=/sbin/ip link set wlan0 up
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

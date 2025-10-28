@@ -1,6 +1,6 @@
-# 📡 OaKhz Audio v2 - WiFi Access Point Fallback
+# 📡 OaKhz Audio v2 - WiFi Access Point with Captive Portal
 
-Intelligent automatic switching system between WiFi client and Access Point to access the equalizer without a home network.
+Permanent WiFi Access Point with captive portal for easy access to the equalizer interface. Optional manual switching to WiFi client mode for home network connection.
 
 -- Written with Claude AI
 
@@ -22,33 +22,33 @@ Intelligent automatic switching system between WiFi client and Access Point to a
 
 ## Overview
 
-This system allows access to the CamillaDSP equalizer web interface **in all situations**:
+This system provides a **permanent WiFi Access Point** with captive portal for easy access to the CamillaDSP equalizer web interface:
 
-- ✅ **At home**: Connection to home WiFi network (normal mode)
-- ✅ **On the go**: Automatic WiFi Access Point creation
+- ✅ **Always accessible**: Permanent AP mode by default
+- ✅ **Captive portal**: Browser auto-opens on connection
+- ✅ **Home WiFi option**: Manual switch to client mode when needed
 - ✅ **SSH always accessible**: In both modes
-- ✅ **Automatic switching**: Smart detection and mode switching
+- ✅ **Simple management**: Single command to switch modes
 
 ### How does it work?
 
 ```
 On Raspberry Pi boot
            ↓
-   Home WiFi available?
+    Starts in AP Mode
            ↓
-    ┌──────┴──────┐
-    │             │
-   YES           NO
-    │             │
-    ▼             ▼
-┌────────┐   ┌──────────┐
-│ CLIENT │   │    AP    │
-│  MODE  │   │   MODE   │
-└────────┘   └──────────┘
-    │             │
-    ▼             ▼
-Access via     Access via
-Local IP       192.168.50.1
+   ┌──────────────┐
+   │   AP MODE    │
+   │ (Default)    │
+   └──────────────┘
+           │
+           ▼
+   Access via captive portal
+   http://192.168.50.1
+
+Manual switch available:
+   oakhz-wifi-mode client  → WiFi Client
+   oakhz-wifi-mode ap      → Access Point
 ```
 
 ---
@@ -59,15 +59,22 @@ Local IP       192.168.50.1
 
 | Mode | WiFi | IP Address | Equalizer Access | SSH Access |
 |------|------|------------|-----------------|-----------|
-| **Client** | Connected to home network | DHCP (e.g. 192.168.1.x) | `http://[IP]` | `ssh user@[IP]` |
-| **Access Point** | Creates "OaKhz-Config" network | 192.168.50.1 | `http://192.168.50.1` | `ssh user@192.168.50.1` |
+| **Access Point** (default) | Creates "OaKhzWifi" network | 192.168.50.1 | `http://192.168.50.1` | `ssh user@192.168.50.1` |
+| **Client** (manual) | Connected to home network | DHCP (e.g. 192.168.1.x) | `http://[IP]` | `ssh user@[IP]` |
 
-### ⚡ Automatic Switching
+### ⚡ Captive Portal
 
-- **Detection every 30 seconds** of WiFi connection
-- **3 reconnection attempts** before switching to AP mode
-- **Automatic return** to Client mode if home WiFi becomes available again
-- **No SSH interruption**: Network interface remains active during switching
+- **Automatic browser opening** when connecting to WiFi
+- **DNS redirection**: All domain names point to the device
+- **HTTP redirection**: All web requests redirect to equalizer interface
+- **Seamless experience**: No need to type IP address
+
+### 🔄 Manual Mode Switching
+
+- **Simple command**: `oakhz-wifi-mode {ap|client|status}`
+- **NetworkManager integration**: Automatic connection to saved WiFi networks
+- **Persistent**: Mode survives until manually changed
+- **No downtime**: Clean transition between modes
 
 ### 🔒 Security
 
@@ -80,12 +87,12 @@ Local IP       192.168.50.1
 
 | Parameter | Value |
 |-----------|--------|
-| **AP SSID** | OaKhz-Config |
+| **AP SSID** | OaKhzWifi |
 | **AP Password** | oakhz |
 | **AP IP** | 192.168.50.1 |
 | **DHCP Range** | 192.168.50.10 - 192.168.50.50 |
 | **WiFi Channel** | 6 |
-| **Check Interval** | 30 seconds |
+| **Default Mode** | Access Point |
 
 ---
 
@@ -93,39 +100,49 @@ Local IP       192.168.50.1
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│              oakhz-wifi-manager.service                 │
-│              (Python monitoring script)                 │
+│                  Boot Sequence                          │
 ├─────────────────────────────────────────────────────────┤
-│  • Monitors WiFi connection every 30s                   │
-│  • Switches between CLIENT and AP modes                 │
-│  • Retries connection (max 3 attempts)                  │
-│  • Manages hostapd and dnsmasq services                 │
-└────────────┬────────────────────────────┬───────────────┘
-             │                            │
-    ┌────────▼────────┐          ┌────────▼─────────┐
-    │  CLIENT MODE    │          │    AP MODE       │
-    ├─────────────────┤          ├──────────────────┤
-    │ wpa_supplicant  │          │ hostapd          │
-    │ dhcpcd          │          │ dnsmasq          │
-    │ Dynamic IP      │          │ Static IP        │
-    └────────┬────────┘          └────────┬─────────┘
-             │                            │
-             └────────────┬───────────────┘
-                          │
-             ┌────────────▼─────────────┐
-             │      wlan0 Interface     │
-             └──────────────────────────┘
+│  1. wlan0-ap.service → Configure static IP              │
+│  2. hostapd.service → Start Access Point                │
+│  3. dnsmasq.service → Start DHCP + DNS (captive portal) │
+│  4. oakhz-equalizer.service → Start web interface       │
+└─────────────────────────────────────────────────────────┘
+             │
+             ▼
+    ┌────────────────┐
+    │    AP MODE     │
+    │   (Default)    │
+    ├────────────────┤
+    │ hostapd        │
+    │ dnsmasq        │
+    │ Static IP      │
+    │ Captive portal │
+    └────────────────┘
+             │
+             ▼
+   ┌──────────────────┐
+   │ wlan0 Interface  │
+   │  192.168.50.1    │
+   └──────────────────┘
+
+Manual switch via oakhz-wifi-mode:
+    ┌────────────────┐
+    │  CLIENT MODE   │
+    ├────────────────┤
+    │ NetworkManager │
+    │ Dynamic IP     │
+    └────────────────┘
 ```
 
 ### Involved Services
 
-| Service | Role | Mode |
-|---------|------|------|
-| **oakhz-wifi-manager** | Monitoring and switching | Always active |
-| **wpa_supplicant** | WiFi client connection | CLIENT only |
-| **dhcpcd** | DHCP Client | CLIENT only |
-| **hostapd** | Access Point creation | AP only |
-| **dnsmasq** | DHCP + DNS Server | AP only |
+| Service | Role | Auto-start |
+|---------|------|------------|
+| **wlan0-ap** | Configure static IP for AP | Yes (before hostapd) |
+| **hostapd** | Access Point creation | Yes |
+| **dnsmasq** | DHCP + DNS Server + Captive portal | Yes |
+| **oakhz-equalizer** | Flask web server + equalizer | Yes |
+| **NetworkManager** | WiFi client connection | No (manual via script) |
 
 ---
 
@@ -168,24 +185,22 @@ Continue with installation? (y/n)
 
 1. **Dependencies:**
    - `hostapd`: Access Point creation
-   - `dnsmasq`: DHCP + DNS Server
-   - `dhcpcd5`: DHCP Client
-   - `python3`: Monitoring script
+   - `dnsmasq`: DHCP + DNS Server + Captive portal
 
 2. **Configurations:**
    - `/etc/hostapd/hostapd.conf`: AP configuration
-   - `/etc/dnsmasq.conf`: DHCP/DNS configuration
-   - `/etc/dhcpcd.conf`: Static IP configuration
+   - `/etc/dnsmasq.conf`: DHCP/DNS + captive portal configuration
+   - `/opt/oakhz/eq_server.py`: Flask catch-all route for captive portal
    - Automatic backups of existing configs
 
 3. **Scripts:**
-   - `/usr/local/bin/oakhz-wifi-manager.py`: WiFi Manager
+   - `/usr/local/bin/oakhz-wifi-mode`: Manual mode switcher script
 
 4. **Services:**
-   - `/etc/systemd/system/oakhz-wifi-manager.service`
-
-5. **Web Portal:**
-   - `/var/www/html/index.html`: Redirection to equalizer
+   - `/etc/systemd/system/wlan0-ap.service`: Static IP configuration
+   - `hostapd.service`: Access Point (enabled at boot)
+   - `dnsmasq.service`: DHCP + DNS (enabled at boot)
+   - `NetworkManager.service`: WiFi client (disabled at boot)
 
 ### Post-Installation
 
@@ -198,33 +213,23 @@ sudo reboot
 
 ## Configuration
 
-### Configure Home WiFi
+### Configure Home WiFi (for Client Mode)
 
-**Method 1: Via raspi-config**
+NetworkManager will automatically connect to saved WiFi networks when you switch to client mode.
+
+**To add a WiFi network:**
 ```bash
-sudo raspi-config
-# → System Options
-# → Wireless LAN
-# → Enter SSID and password
+# Switch to client mode
+oakhz-wifi-mode client
+
+# NetworkManager will connect to saved networks automatically
+# Or use nmcli to add a new network:
+sudo nmcli dev wifi connect "YourSSID" password "YourPassword"
 ```
 
-**Method 2: Via wpa_supplicant**
+**To return to AP mode:**
 ```bash
-sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
-```
-
-Add:
-```
-network={
-    ssid="Your_WiFi"
-    psk="Your_Password"
-    key_mgmt=WPA-PSK
-}
-```
-
-Restart:
-```bash
-sudo systemctl restart oakhz-wifi-manager
+oakhz-wifi-mode ap
 ```
 
 ### Change AP Password
@@ -238,9 +243,9 @@ Modify:
 wpa_passphrase=YourNewPassword
 ```
 
-Restart:
+Restart hostapd:
 ```bash
-sudo systemctl restart oakhz-wifi-manager
+sudo systemctl restart hostapd
 ```
 
 ### Change AP SSID
@@ -254,16 +259,24 @@ Modify:
 ssid=YourNewSSID
 ```
 
-Restart:
+Restart hostapd:
 ```bash
-sudo systemctl restart oakhz-wifi-manager
+sudo systemctl restart hostapd
 ```
 
 ### Change AP IP
 
 ⚠️ **Warning**: Multiple files to modify
 
-**1. hostapd (not necessary but for consistency)**
+**1. wlan0-ap service:**
+```bash
+sudo nano /etc/systemd/system/wlan0-ap.service
+```
+
+Modify:
+```
+ExecStart=/sbin/ip addr add 192.168.60.1/24 dev wlan0
+```
 
 **2. dnsmasq:**
 ```bash
@@ -274,166 +287,125 @@ Modify:
 ```
 dhcp-range=192.168.60.10,192.168.60.50,12h
 address=/oakhz.local/192.168.60.1
+address=/#/192.168.60.1
 ```
 
-**3. Python Script:**
+**3. Mode switcher script:**
 ```bash
-sudo nano /usr/local/bin/oakhz-wifi-manager.py
+sudo nano /usr/local/bin/oakhz-wifi-mode
 ```
 
-Modify:
-```python
-AP_IP = "192.168.60.1"
-AP_DHCP_START = "192.168.60.10"
-AP_DHCP_END = "192.168.60.50"
-```
+Modify the AP section with the new IP.
 
-**4. Web portal:**
+Restart services:
 ```bash
-sudo nano /var/www/html/index.html
-```
-
-Modify all occurrences of `192.168.50.1` → `192.168.60.1`
-
-Restart:
-```bash
-sudo systemctl restart oakhz-wifi-manager
-```
-
-### Change Check Interval
-
-```bash
-sudo nano /usr/local/bin/oakhz-wifi-manager.py
-```
-
-Modify:
-```python
-# Default: 30 seconds
-CHECK_INTERVAL = 30
-
-# Change to 60 seconds:
-CHECK_INTERVAL = 60
-```
-
-Restart:
-```bash
-sudo systemctl restart oakhz-wifi-manager
-```
-
-### Change Number of Retries
-
-```bash
-sudo nano /usr/local/bin/oakhz-wifi-manager.py
-```
-
-Modify:
-```python
-# Default: 3 attempts
-MAX_RETRIES = 3
-
-# Change to 5 attempts:
-MAX_RETRIES = 5
-```
-
-Restart:
-```bash
-sudo systemctl restart oakhz-wifi-manager
+sudo systemctl daemon-reload
+sudo systemctl restart wlan0-ap hostapd dnsmasq
 ```
 
 ---
 
 ## Usage
 
-### Scenario 1: Home Use
+### Default Usage (AP Mode)
 
-1. **On boot**: The Pi automatically connects to home WiFi
-2. **Find the IP**:
-   ```bash
-   # On the Pi
-   hostname -I
-   # Or from another PC on the network
-   ping oakhz.local
-   ```
-3. **Access the equalizer**: `http://[IP]`
-4. **SSH**: `ssh oakhz@[IP]`
-
-### Scenario 2: On the Go Use
-
-1. **On boot**: No home WiFi → Automatic AP mode
+1. **On boot**: The Pi starts in Access Point mode
 2. **On your smartphone/PC**:
    - Open WiFi settings
-   - Connect to `OaKhz-Config`
+   - Connect to `OaKhzWifi`
    - Password: `oakhz`
+   - **Captive portal**: Your browser should automatically open the equalizer interface
+   - If not, open any website (e.g., `google.com`) and you'll be redirected
 3. **Access the equalizer**: `http://192.168.50.1`
 4. **SSH**: `ssh oakhz@192.168.50.1`
 
-### Scenario 3: Loss of Home WiFi
+### Switch to Client Mode (Home WiFi)
 
-1. **During use**: Home WiFi outage
-2. **After 30 seconds**: Connection loss detected
-3. **Reconnection attempts**: 3 spaced attempts
-4. **AP switching**: If failed after 3 attempts
-5. **Notification in logs**:
-   ```
-   [wifi-manager] WARNING: WiFi connection lost
-   [wifi-manager] INFO: Attempting reconnection (1/3)...
-   [wifi-manager] WARNING: Max retries reached, switching to AP mode
-   [wifi-manager] INFO: ✓ Access Point started: SSID=OaKhz-Config
-   ```
+When you want to connect the device to your home WiFi network:
 
-### Scenario 4: Home WiFi Returns
-
-1. **In AP mode**: The Pi listens periodically
-2. **Every 30 seconds**: Attempts to connect to home WiFi
-3. **If successful**: Automatic switching to Client mode
-4. **Notification in logs**:
-   ```
-   [wifi-manager] INFO: Checking if home WiFi is available...
-   [wifi-manager] INFO: Successfully connected to home WiFi
-   [wifi-manager] INFO: ✓ IP Address: 192.168.1.42
-   ```
-
-### Force a Mode Manually
-
-**Force AP mode:**
 ```bash
-sudo systemctl stop oakhz-wifi-manager
-sudo systemctl stop wpa_supplicant
-sudo systemctl stop dhcpcd
-sudo ip addr add 192.168.50.1/24 dev wlan0
-sudo systemctl start hostapd
-sudo systemctl start dnsmasq
+# SSH into the device (via AP mode first)
+ssh oakhz@192.168.50.1
+
+# Switch to client mode
+oakhz-wifi-mode client
 ```
 
-**Return to automatic mode:**
+The device will:
+1. Stop the Access Point
+2. Start NetworkManager
+3. Automatically connect to saved WiFi networks
+4. Display the new IP address
+
+**Access the equalizer on home WiFi:**
 ```bash
-sudo systemctl restart oakhz-wifi-manager
+# Find the IP
+hostname -I
+# Or from another PC
+ping oakhz.local
+
+# Access equalizer
+http://[home-network-IP]
+```
+
+### Return to AP Mode
+
+```bash
+# SSH into the device (via home network)
+ssh oakhz@[home-network-IP]
+
+# Switch back to AP mode
+oakhz-wifi-mode ap
 ```
 
 ### Check Current Mode
 
 ```bash
-# Via services
-systemctl is-active hostapd
-systemctl is-active wpa_supplicant
-
-# If hostapd active → AP Mode
-# If wpa_supplicant active → Client Mode
-
-# Check IP
-ip addr show wlan0 | grep inet
-# If 192.168.50.1 → AP Mode
-# If other IP → Client Mode
+# Display current WiFi mode and status
+oakhz-wifi-mode status
 ```
 
-### Monitor in Real-Time
+Output example:
+```
+Current WiFi status:
+Mode: Access Point (AP)
+SSID: OaKhzWifi
+IP: 192.168.50.1
+```
+
+or
+
+```
+Current WiFi status:
+Mode: WiFi Client
+wlan0: connected to YourHomeWiFi
+```
+
+### Manual Mode Control Commands
 
 ```bash
-# WiFi manager logs
-sudo journalctl -u oakhz-wifi-manager -f
+# Check status
+oakhz-wifi-mode status
 
-# Services status
-watch -n 2 'systemctl is-active hostapd wpa_supplicant dhcpcd dnsmasq'
+# Switch to WiFi client (connect to home network)
+oakhz-wifi-mode client
+
+# Switch to Access Point (captive portal)
+oakhz-wifi-mode ap
+```
+
+### Monitor Services
+
+```bash
+# Check AP services
+systemctl status hostapd dnsmasq
+
+# Check NetworkManager (client mode)
+systemctl status NetworkManager
+
+# View logs
+sudo journalctl -u hostapd -f
+sudo journalctl -u dnsmasq -f
 ```
 
 ---
@@ -852,7 +824,6 @@ sudo reboot
 - [Base System Installation](./README-v2-install.md)
 - [Sound Feedback System](./README-v2-sound.md)
 - [Rotary Encoder Control](./README-v2-rotary.md)
-- [Fast Boot Optimization](./README-v2-fast-boot.md)
 
 ---
 
