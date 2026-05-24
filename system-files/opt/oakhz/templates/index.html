@@ -15,12 +15,8 @@
         .container { max-width: 1200px; margin: 0 auto; }
         header { text-align: center; margin-bottom: 40px; }
         h1 {
-            font-size: 2.5rem;
-            background: linear-gradient(135deg, #5d4037 0%, #4a3728 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 10px;
+            font-size: 2rem;
+            color: #5d4037;
         }
         .subtitle { color: #b8a894; font-size: 1rem; }
         .card {
@@ -289,7 +285,80 @@
 <body>
     <div class="container">
         <header>
-            <h1>🎵 OaKhz Audio 🔊</h1>
+            <!-- Speaker facade illustration -->
+            <div style="display:flex; justify-content:center; margin-bottom:24px;">
+                <svg viewBox="0 0 520 200" width="100%" style="max-width:260px; filter: drop-shadow(0 6px 16px rgba(0,0,0,0.5));">
+                    <!-- Outer frame (light birch plywood) -->
+                    <rect x="0" y="0" width="520" height="200" rx="18" ry="18" fill="#d4b483" />
+                    <!-- Inner frame inset -->
+                    <rect x="10" y="10" width="500" height="180" rx="12" ry="12" fill="#c9a96e" />
+
+                    <!-- Dark wood panel with horizontal grain stripes -->
+                    <rect x="22" y="22" width="476" height="156" rx="6" ry="6" fill="#4a2e14" />
+                    <!-- Grain lines -->
+                    <line x1="22" y1="38" x2="498" y2="38" stroke="#3d2510" stroke-width="2.5" opacity="0.7"/>
+                    <line x1="22" y1="54" x2="498" y2="54" stroke="#5c3a1a" stroke-width="1.5" opacity="0.5"/>
+                    <line x1="22" y1="68" x2="498" y2="68" stroke="#3d2510" stroke-width="3" opacity="0.6"/>
+                    <line x1="22" y1="84" x2="498" y2="84" stroke="#5c3a1a" stroke-width="1.5" opacity="0.4"/>
+                    <line x1="22" y1="100" x2="498" y2="100" stroke="#3d2510" stroke-width="2" opacity="0.7"/>
+                    <line x1="22" y1="116" x2="498" y2="116" stroke="#5c3a1a" stroke-width="2.5" opacity="0.5"/>
+                    <line x1="22" y1="132" x2="498" y2="132" stroke="#3d2510" stroke-width="1.5" opacity="0.6"/>
+                    <line x1="22" y1="148" x2="498" y2="148" stroke="#5c3a1a" stroke-width="3" opacity="0.4"/>
+                    <line x1="22" y1="162" x2="498" y2="162" stroke="#3d2510" stroke-width="1.5" opacity="0.5"/>
+
+                    <!-- LEFT SPEAKER — center x=102, y=100 -->
+                    <circle cx="80"  cy="44"  r="4" fill="#222" /><circle cx="80"  cy="44"  r="1.5" fill="#555"/>
+                    <circle cx="174" cy="44"  r="4" fill="#222" /><circle cx="174" cy="44"  r="1.5" fill="#555"/>
+                    <circle cx="80"  cy="156" r="4" fill="#222" /><circle cx="80"  cy="156" r="1.5" fill="#555"/>
+                    <circle cx="174" cy="156" r="4" fill="#222" /><circle cx="174" cy="156" r="1.5" fill="#555"/>
+                    <circle cx="127" cy="100" r="64" fill="#1a0f05" />
+                    <circle cx="127" cy="100" r="60" fill="#2a1a0a" />
+                    <circle cx="127" cy="100" r="52" fill="#111" />
+                    <circle cx="127" cy="100" r="50" fill="url(#speakerGrad)" />
+                    <circle cx="127" cy="100" r="40" fill="none" stroke="#1a1a1a" stroke-width="2.5"/>
+                    <circle cx="127" cy="100" r="30" fill="none" stroke="#222" stroke-width="2"/>
+                    <circle cx="127" cy="100" r="20" fill="none" stroke="#1a1a1a" stroke-width="1.5"/>
+                    <circle cx="127" cy="100" r="12" fill="#0d0d0d" />
+                    <circle cx="127" cy="100" r="8"  fill="#161616" />
+                    <circle cx="117"  cy="88"  r="5"  fill="white" opacity="0.08"/>
+
+                    <!-- RIGHT SPEAKER — center x=418, y=100 -->
+                    <circle cx="346" cy="44"  r="4" fill="#222" /><circle cx="346" cy="44"  r="1.5" fill="#555"/>
+                    <circle cx="440" cy="44"  r="4" fill="#222" /><circle cx="440" cy="44"  r="1.5" fill="#555"/>
+                    <circle cx="346" cy="156" r="4" fill="#222" /><circle cx="346" cy="156" r="1.5" fill="#555"/>
+                    <circle cx="440" cy="156" r="4" fill="#222" /><circle cx="440" cy="156" r="1.5" fill="#555"/>
+                    <circle cx="395" cy="100" r="64" fill="#1a0f05" />
+                    <circle cx="395" cy="100" r="60" fill="#2a1a0a" />
+                    <circle cx="395" cy="100" r="52" fill="#111" />
+                    <circle cx="395" cy="100" r="50" fill="url(#speakerGrad2)" />
+                    <circle cx="395" cy="100" r="40" fill="none" stroke="#1a1a1a" stroke-width="2.5"/>
+                    <circle cx="395" cy="100" r="30" fill="none" stroke="#222" stroke-width="2"/>
+                    <circle cx="395" cy="100" r="20" fill="none" stroke="#1a1a1a" stroke-width="1.5"/>
+                    <circle cx="395" cy="100" r="12" fill="#0d0d0d" />
+                    <circle cx="395" cy="100" r="8"  fill="#161616" />
+                    <circle cx="385" cy="88"  r="5"  fill="white" opacity="0.08"/>
+
+                    <!-- CENTER TRIANGULAR BASS PORT — center x=260, base collée y=178, apex y=50 -->
+                    <polygon points="200,178 260,100 320,178" fill="#c9a96e" />
+                    <circle cx="260" cy="150" r="20" fill="#0a0805" />
+                    
+            
+                    <!-- Gradient defs -->
+                    <defs>
+                        <radialGradient id="speakerGrad" cx="40%" cy="35%" r="65%">
+                            <stop offset="0%" stop-color="#3a3a3a"/>
+                            <stop offset="50%" stop-color="#1c1c1c"/>
+                            <stop offset="100%" stop-color="#0a0a0a"/>
+                        </radialGradient>
+                        <radialGradient id="speakerGrad2" cx="40%" cy="35%" r="65%">
+                            <stop offset="0%" stop-color="#3a3a3a"/>
+                            <stop offset="50%" stop-color="#1c1c1c"/>
+                            <stop offset="100%" stop-color="#0a0a0a"/>
+                        </radialGradient>
+                    </defs>
+                </svg>
+            </div>
+            <h1>• oaKhz audio •</h1>
         </header>
 
         <!-- Media Player Card -->

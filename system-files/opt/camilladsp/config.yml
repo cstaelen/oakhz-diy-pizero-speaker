@@ -14,82 +14,221 @@ devices:
     format: S16LE
 
 filters:
-  # 10-band parametric equalizer
+
+  # --- PEAK LIMITER ---
+  # Soft brick-wall limiter to prevent clipping at high volume
+  peak_limiter:
+    type: Gain
+    parameters:
+      gain: -2
+      inverted: false
+
+  # --- PREAMP ---
+  # Global gain
+  preamp_gain:
+    type: Gain
+    parameters:
+      gain: 7
+      inverted: false
+
+  # --- DRIVER PROTECTION ---
+  # High-pass filter to protect 80mm drivers below their physical limit
+  hp_protection:
+    type: Biquad
+    parameters:
+      type: Highpass
+      freq: 45
+      q: 0.7
+
+  # --- LOUDNESS BASS ---
+  # Reduced vs v1 — stiffer plywood enclosure + better vent access
+  # means the bass reflex works more efficiently at ~58Hz
+  loudness_bass_low:
+    type: Biquad
+    parameters:
+      type: Peaking
+      freq: 58
+      q: 0.9
+      gain: 4
+
+  # Mid-bass punch - reduced, enclosure is tighter now
+  loudness_bass_mid:
+    type: Biquad
+    parameters:
+      type: Peaking
+      freq: 100
+      q: 1.2
+      gain: 3
+
+  # --- ROOM CORRECTION ---
+  # Reduced — less internal reflections with cleared center space
+  room_correction:
+    type: Biquad
+    parameters:
+      type: Peaking
+      freq: 200
+      q: 0.8
+      gain: 1
+
+  # --- MIDRANGE CORRECTION ---
+  # Cut nasal midrange typical of small drivers
+  mid_cut_low:
+    type: Biquad
+    parameters:
+      type: Peaking
+      freq: 300
+      q: 1.0
+      gain: -3
+
+  mid_cut_high:
+    type: Biquad
+    parameters:
+      type: Peaking
+      freq: 600
+      q: 1.0
+      gain: -2
+
+  # --- PRESENCE ---
+  # Vocal clarity and instrument presence
+  presence:
+    type: Biquad
+    parameters:
+      type: Peaking
+      freq: 3000
+      q: 1.5
+      gain: 2
+
+  # --- LOUDNESS TREBLE ---
+  # Brilliance and air - JBL/Bose signature
+  loudness_treble:
+    type: Biquad
+    parameters:
+      type: Highshelf
+      freq: 8000
+      slope: 6
+      gain: 4
+
+  # --- 10-BAND PARAMETRIC EQ ---
+  # Adjusted for v2 enclosure — less bass boost needed
   eq_31:
     type: Biquad
     parameters:
       type: Peaking
       freq: 31
       q: 1.0
-      gain: 0.0
+      gain: 4.0
+
   eq_63:
     type: Biquad
     parameters:
       type: Peaking
       freq: 63
       q: 1.0
-      gain: 0.0
+      gain: 4.0
+
   eq_125:
     type: Biquad
     parameters:
       type: Peaking
       freq: 125
       q: 1.0
-      gain: 0.0
+      gain: 4.0
+
   eq_250:
     type: Biquad
     parameters:
       type: Peaking
       freq: 250
       q: 1.0
-      gain: 0.0
+      gain: 2.0
+
   eq_500:
     type: Biquad
     parameters:
       type: Peaking
       freq: 500
       q: 1.0
-      gain: 0.0
+      gain: -4.0
+
   eq_1k:
     type: Biquad
     parameters:
       type: Peaking
       freq: 1000
       q: 1.0
-      gain: 0.0
+      gain: -4.0
+
   eq_2k:
     type: Biquad
     parameters:
       type: Peaking
       freq: 2000
       q: 1.0
-      gain: 0.0
+      gain: -3.0
+
   eq_4k:
     type: Biquad
     parameters:
       type: Peaking
       freq: 4000
       q: 1.0
-      gain: 0.0
+      gain: 4.0
+
   eq_8k:
     type: Biquad
     parameters:
       type: Peaking
       freq: 8000
       q: 1.0
-      gain: 0.0
+      gain: 7.0
+
   eq_16k:
     type: Biquad
     parameters:
       type: Peaking
       freq: 16000
       q: 1.0
-      gain: 0.0
+      gain: 6.0
+
+mixers:
+  # --- STEREO WIDENING ---
+  # Cross-channel mix with phase inversion to widen stereo image
+  stereo_wide:
+    channels:
+      in: 2
+      out: 2
+    mapping:
+      - dest: 0
+        sources:
+          - channel: 0
+            gain: 0
+            inverted: false
+          - channel: 1
+            gain: -9
+            inverted: true
+      - dest: 1
+        sources:
+          - channel: 1
+            gain: 0
+            inverted: false
+          - channel: 0
+            gain: -9
+            inverted: true
 
 pipeline:
   - type: Filter
     channel: 0
     names:
+      - peak_limiter
+      - hp_protection
+      - preamp_gain
+      - loudness_bass_low
+      - loudness_bass_mid
+      - room_correction
+      - mid_cut_low
+      - mid_cut_high
+      - presence
+      - loudness_treble
       - eq_31
       - eq_63
       - eq_125
@@ -100,9 +239,20 @@ pipeline:
       - eq_4k
       - eq_8k
       - eq_16k
+
   - type: Filter
     channel: 1
     names:
+      - peak_limiter
+      - hp_protection
+      - preamp_gain
+      - loudness_bass_low
+      - loudness_bass_mid
+      - room_correction
+      - mid_cut_low
+      - mid_cut_high
+      - presence
+      - loudness_treble
       - eq_31
       - eq_63
       - eq_125
@@ -113,3 +263,6 @@ pipeline:
       - eq_4k
       - eq_8k
       - eq_16k
+
+  - type: Mixer
+    name: stereo_wide
