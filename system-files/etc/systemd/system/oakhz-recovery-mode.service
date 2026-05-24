@@ -1,6 +1,7 @@
 [Unit]
 Description=OaKhz Recovery Mode Checker
 Before=wlan0-ap.service hostapd.service dnsmasq.service NetworkManager.service
+After=local-fs.target
 DefaultDependencies=no
 
 [Service]

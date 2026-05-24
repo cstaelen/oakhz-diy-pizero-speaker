@@ -18,7 +18,7 @@ This educational project aims to build a prototype of a Bluetooth speaker that i
 
 ## 📦 What's Included
 
-This complete system includes three main components:
+This complete system includes five components:
 
 ### 1. 🔊 [Base System - Bluetooth Speaker](./docs/README-v2-install.md) *(Required)*
 
@@ -26,11 +26,11 @@ The core audio system with Bluetooth streaming and CamillaDSP parametric equaliz
 
 **Features:**
 - ✅ Bluetooth A2DP streaming (auto-pairing, no PIN)
-- ✅ 10-band parametric equalizer (CamillaDSP 48kHz)
+- ✅ DSP audio pipeline: loudness, driver protection, stereo widening + 10-band parametric EQ (CamillaDSP 48kHz)
 - ✅ Professional audio pipeline: Bluetooth → PulseAudio → Loopback → CamillaDSP → HiFiBerry DAC
 - ✅ ALSA loopback for flexible routing
 - ✅ Automatic device pairing (NoInputNoOutput)
-- ✅ Hostname: "OaKhz audio" (visible via Bluetooth)
+- ✅ Hostname: "OaKhz Audio" (visible via Bluetooth)
 
 **[📖 Read Full Installation Guide →](./docs/README-v2-install.md)**
 
@@ -42,13 +42,13 @@ Web-based control panel for CamillaDSP equalizer with real-time adjustments.
 
 **Features:**
 - 🌐 Web interface accessible from any device
-- 🎚️ 10-band parametric EQ with visual feedback
-- 💾 Preset management (save/load custom configurations)
-- ⚡ Real-time updates via WebSocket
-- 📊 Frequency response graph
-- 📱 Mobile-responsive design (warm wood theme)
+- 🎚️ 10-band parametric EQ with preamp control
+- 💾 Persistent EQ state (`~/.oakhz_eq.json`)
+- ⚡ Real-time updates (HTTP REST → CamillaDSP SIGHUP)
+- 📱 Mobile-responsive design
 - 🎵 Media player controls (Play/Pause/Next/Previous)
 - 📻 Real-time metadata display (Artist, Title, Album, Status)
+- 🌀 Captive portal support (AP mode)
 
 **Access:** `http://[raspberry-pi-ip]` or `http://192.168.50.1` (AP mode)
 
@@ -64,7 +64,8 @@ Audible notifications for system events through PulseAudio.
 - 🎵 Ready sound (Bluetooth discoverable - C major arpeggio)
 - 🎵 Connection sound (device connects/reconnects - high chime)
 - 🎵 Shutdown sound (system powering off - descending arpeggio)
-- 🔊 All sounds at 80% volume via `paplay` (shutdown at 25%)
+- 🔊 Ready/connect sounds at 80% via `paplay` through CamillaDSP
+- 🔇 Shutdown sound via `aplay` direct to DAC (CamillaDSP stopped first)
 - 🎯 Automatic PulseAudio routing through equalizer
 - 🔄 Single device mode (auto-disconnect old connections)
 
@@ -92,19 +93,18 @@ Physical rotary encoder for tactile volume and media control.
 
 ---
 
-### 5. 📡 [WiFi Access Point Fallback](./docs/README-v2-accesspoint.md) *(Optional)*
+### 5. 📡 [WiFi Access Point](./docs/README-v2-accesspoint.md) *(Optional)*
 
-Automatic WiFi client/Access Point switching for equalizer access anywhere.
+Permanent WiFi Access Point with captive portal and file-based emergency recovery mode.
 
 **Features:**
-- 🌐 Auto-connect to home WiFi when available
-- 📡 Auto-switch to AP mode when no WiFi
-- 🔄 Smart monitoring and switching (every 30s)
-- 🔒 WPA2 secured Access Point
-- 🎯 Equalizer accessible in both modes
+- 📡 Permanent AP mode by default (SSID: "OaKhz Wifi", password: `oakhzwifi`)
+- 🌐 Captive portal — browser auto-opens on connection
+- 🔒 WPA2 secured, IP `192.168.50.1`
+- 🆘 Recovery mode: create `/boot/firmware/enable-wifi-client` on SD card to switch to WiFi client
 - 💻 SSH always available
 
-**Access:** Home WiFi → `http://[IP]` | AP mode → `http://192.168.50.1`
+**Access:** AP mode → `http://192.168.50.1`
 
 **[📖 Read Full Documentation →](./docs/README-v2-accesspoint.md)**
 
@@ -136,14 +136,14 @@ sudo bash scripts/setup-sound.sh
 # 4. Rotary Encoder (Optional)
 sudo bash scripts/setup-rotary.sh
 
-# 5. WiFi Access Point Fallback (Optional)
+# 5. WiFi Access Point (Optional)
 sudo bash scripts/setup-accesspoint.sh
 sudo reboot
 ```
 
 ### After Installation
 
-1. **Connect Bluetooth**: Look for "OaKhz audio" on your phone
+1. **Connect Bluetooth**: Look for "OaKhz Audio" on your phone
 2. **Access Web Interface** *(if equalizer installed)*: `http://[Pi-IP]`
 3. **Use Rotary Control** *(if rotary installed)*: Turn for volume, press for play/pause/skip
 
@@ -193,7 +193,7 @@ sudo reboot
 │              Sound Feedback & Routing                    │
 ├──────────────────────────────────────────────────────────┤
 │  Audio Events  │  Bluetooth     │  Auto-routing         │
-│  (paplay 65%/75%) │  Monitor    │  (switch-on-connect)  │
+│  (paplay 80%)  │  Monitor       │  (switch-on-connect)  │
 │  - Ready       │  - Connection  │                        │
 │  - Shutdown    │  - Single dev  │                        │
 └────────┬───────┴───────┬────────┴────────────────────────┘
@@ -204,8 +204,8 @@ sudo reboot
 └────────────────────────┬─────────────────────────────────┘
                          │
 ┌────────────────────────▼─────────────────────────────────┐
-│                  CamillaDSP (Equalizer)                  │
-│  10-Band Parametric EQ @ 48kHz                           │
+│           CamillaDSP DSP Processor @ 48kHz               │
+│  Loudness / Protection / Stereo Wide / 10-band EQ        │
 │  WebSocket: 1234                                         │
 └────────────────────────┬─────────────────────────────────┘
                          │
@@ -232,7 +232,7 @@ sudo reboot
 
 ### User Experience
 - **Auto-pairing** Bluetooth (no PIN)
-- **Web interface** with media player controls (natural wood theme)
+- **Web interface** with media player controls
 - **Real-time metadata display** (Artist, Title, Album, Status)
 - **Physical media controls** with rotary encoder (Play/Pause/Next)
 - **Audio feedback** for system events
@@ -253,12 +253,12 @@ sudo reboot
 ## 📱 Usage
 
 ### Bluetooth Playback
-1. On your phone, look for "OaKhz audio" in Bluetooth settings
+1. On your phone, look for "OaKhz Audio" in Bluetooth settings
 2. Connect (no PIN required)
 3. Play music - audio routes automatically through equalizer
 
 ### Web Interface
-1. Open `http://[Raspberry-Pi-IP]` or `http://oakhz.local`
+1. Open `http://[Raspberry-Pi-IP]` (AP mode: `http://192.168.50.1`)
 2. **Now Playing section** shows:
    - 🎵 Current track (Artist, Title, Album)
    - ⏯️ Playback status (Playing/Paused/Stopped)
@@ -269,9 +269,8 @@ sudo reboot
    - ⏭ Next track
 4. **Equalizer**:
    - 10-band parametric EQ (-12dB to +12dB per band)
-   - Preamp master volume control (-12dB to +12dB)
-   - 8 presets: Flat, Rock, Pop, Jazz, Classical, Bass, Treble, Vocal
-   - Changes apply in real-time
+   - Preamp master volume control
+   - Changes apply in real-time via CamillaDSP reload
 
 ### Rotary Controls
 - **Turn left/right**: Volume ±3%
@@ -285,39 +284,21 @@ sudo reboot
 
 | Service | Purpose | Status Command |
 |---------|---------|----------------|
-| **bluetooth.service** | Bluetooth stack | `sudo systemctl status bluetooth` |
-| **bt-agent.service** | Auto-pairing | `sudo systemctl status bt-agent` |
-| **pulseaudio.service** | System audio | `sudo systemctl status pulseaudio` |
-| **camilladsp.service** | Equalizer | `sudo systemctl status camilladsp` |
-| **oakhz-equalizer.service** | Web interface | `sudo systemctl status oakhz-equalizer` |
-| **oakhz-audio-events.service** | Sound feedback | `sudo systemctl status oakhz-audio-events` |
-| **oakhz-rotary.service** | Rotary control | `sudo systemctl status oakhz-rotary` |
+| **bluetooth.service** | Bluetooth daemon | `sudo systemctl status bluetooth` |
+| **bt-agent.service** | Auto-pairing (NoInputNoOutput) | `sudo systemctl status bt-agent` |
+| **pulseaudio.service** | System audio + BT routing | `sudo systemctl status pulseaudio` |
+| **camilladsp.service** | DSP processor (port 1234) | `sudo systemctl status camilladsp` |
+| **oakhz-equalizer.service** | Web interface (port 80) | `sudo systemctl status oakhz-equalizer` |
+| **oakhz-audio-events.service** | Startup/connect sounds + BT monitor | `sudo systemctl status oakhz-audio-events` |
+| **oakhz-shutdown-sound.service** | Shutdown sound (before halt) | `sudo systemctl status oakhz-shutdown-sound` |
+| **oakhz-rotary.service** | Rotary encoder controller | `sudo systemctl status oakhz-rotary` |
+| **oakhz-recovery-mode.service** | Boot-time WiFi mode selector | `sudo systemctl status oakhz-recovery-mode` |
+| **wlan0-ap.service** | Static IP for AP mode | `sudo systemctl status wlan0-ap` |
+| **hostapd.service** | WiFi Access Point | `sudo systemctl status hostapd` |
+| **dnsmasq.service** | DHCP + DNS + captive portal | `sudo systemctl status dnsmasq` |
 
 ---
 
-## 🔍 Troubleshooting Quick Links
-
-### Common Issues
-
-**No Bluetooth connection?**
-→ See [Base System Troubleshooting](./docs/README-v2-install.md#troubleshooting)
-
-**No sound output?**
-→ See [Base System - No Sound](./docs/README-v2-install.md#no-sound)
-
-**Sound feedback not playing?**
-→ See [Sound Feedback Troubleshooting](./docs/README-v2-sound.md#troubleshooting)
-
-**Rotary encoder not responding?**
-→ See [Rotary Encoder Troubleshooting](./docs/README-v2-rotary.md#troubleshooting)
-
-**Volume control not working?**
-→ See [Rotary - Volume Not Changing](./docs/README-v2-rotary.md#volume-not-changing)
-
-**Web interface not accessible?**
-→ See [Web Equalizer Troubleshooting](./docs/README-v2-equalizer.md#troubleshooting)
-
----
 
 ## 📚 Documentation Structure
 
@@ -329,28 +310,15 @@ OAKHZ_DOC/
 │   ├── README-v2-equalizer.md        # Web equalizer interface
 │   ├── README-v2-sound.md            # Sound feedback system
 │   ├── README-v2-rotary.md           # Rotary encoder control
-│   └── README-v2-accesspoint.md      # WiFi Access Point fallback
+│   └── README-v2-accesspoint.md      # WiFi Access Point
 ├── scripts/                          # Installation scripts
 │   ├── install.sh                    # Base system installer
 │   ├── setup-equalizer.sh            # Web equalizer installer
 │   ├── setup-sound.sh                # Sound feedback installer
 │   ├── setup-rotary.sh               # Rotary encoder installer
 │   └── setup-accesspoint.sh          # WiFi AP installer
-└── sounds/                           # Audio files
+└── system-files/                     # Config files copied to the Pi
 ```
-
----
-
-## 🎨 Customization
-
-Each component can be customized independently:
-
-- **Base System**: Change Bluetooth name, adjust CamillaDSP config
-- **Web Equalizer**: Customize web UI theme, add custom presets, change port
-- **Sound Feedback**: Replace WAV files, adjust volumes, change polling intervals
-- **Rotary Encoder**: Modify GPIO pins, adjust volume steps, change button timings
-
-See individual documentation for detailed customization guides.
 
 ---
 
@@ -362,13 +330,13 @@ Base System (Required)
     ├── Web Equalizer (Optional) ← Depends on CamillaDSP from base
     ├── Sound Feedback (Optional) ← Depends on PulseAudio from base
     ├── Rotary Encoder (Optional) ← Depends on PulseAudio from base
-    └── WiFi AP Fallback (Optional) ← Independent, works with all components
+    └── WiFi AP (Optional) ← Independent, works with all components
 ```
 
 **Installation order:**
 1. Always install Base System first
 2. Add optional components in any order
-3. WiFi AP Fallback is completely independent
+3. WiFi AP is completely independent
 
 ---
 
@@ -380,44 +348,8 @@ Base System (Required)
 - **No network exposure**: Only local web interface (port 80)
 - **Automatic updates**: Use `sudo apt update && sudo apt upgrade`
 
----
-
-## 📝 Changelog
-
-### v4.0 (October 2024) - Media Controls Update
-- ✨ **Added Bluetooth media controls** via BlueZ D-Bus (MediaControl1)
-- 🎵 **Rotary button**: Changed from Mute/Unmute to Play/Pause
-- 🌐 **Web interface**: Added Now Playing section with Artist/Title/Album display
-- 🎮 **Web controls**: Added Play/Pause, Next, Previous buttons
-- 🔊 **Preamp fix**: Master volume preamp now properly applied to CamillaDSP
-- 🔄 **Smart toggle**: Play/Pause checks current status before sending command
-- 📡 **Real-time updates**: Metadata refreshes every 2 seconds
-
-### v3.0 (October 2024)
-- Initial release with 10-band equalizer, rotary controls, and web interface
-
----
 
 ## 📜 License
 
 GPL-3.0 License - Free to use, modify, and redistribute
 
----
-
-## 🙏 Credits
-
-**Software:**
-- Raspberry Pi OS
-- BlueZ (Bluetooth + D-Bus media control)
-- PulseAudio (Audio routing)
-- CamillaDSP (Equalizer)
-- Flask (Web interface)
-- gpiozero (GPIO control)
-
-**Hardware:**
-- HiFiBerry (Audio DAC)
-- Raspberry Pi Foundation
-
----
-
-*OaKhz Audio - v4.0 - October 2024*

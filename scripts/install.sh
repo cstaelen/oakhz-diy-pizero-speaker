@@ -70,11 +70,13 @@ apt install -y \
     pulseaudio-module-bluetooth \
     alsa-utils \
     python3-pip \
+    ladspa-sdk \
+    swh-plugins \
     wget
 
 echo -e "${YELLOW}[3.5/8] Installation de CamillaDSP...${NC}"
 
-# Télécharge CamillaDSP (version ARM64)
+# Download CamillaDSP (version ARM64)
 CAMILLADSP_VERSION="2.0.3"
 CAMILLADSP_URL="https://github.com/HEnquist/camilladsp/releases/download/v${CAMILLADSP_VERSION}/camilladsp-linux-aarch64.tar.gz"
 
@@ -154,7 +156,7 @@ copy_system_file "opt/camilladsp/config.yml" "/opt/camilladsp/config.yml"
 
 chmod 644 /opt/camilladsp/config.yml
 
-# Service systemd pour CamillaDSP
+# Service systemd for CamillaDSP
 copy_system_file "etc/systemd/system/camilladsp.service" "/etc/systemd/system/camilladsp.service"
 
 echo -e "${YELLOW}[7/8] Bluetooth agent configuration...${NC}"
