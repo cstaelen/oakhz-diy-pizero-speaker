@@ -48,17 +48,17 @@ filters:
       type: LinkwitzTransform
       freq_act: 93.5
       q_act: 0.41
-      freq_target: 50.0
+      freq_target: 60.0
       q_target: 0.5
 
   # --- BASS REFLEX ALLPASS ---
   # Compensates group delay of bass reflex at vent tuning frequency
-  # Makes bass "tighter" and less "boomy" — phase coherence at 58Hz
+  # Makes bass "tighter" and less "boomy" — phase coherence at 72Hz
   bass_reflex_allpass:
     type: Biquad
     parameters:
       type: Allpass
-      freq: 58
+      freq: 72
       q: 0.7
 
   # --- BASS VENT BOOST ---
@@ -68,7 +68,7 @@ filters:
     type: Biquad
     parameters:
       type: Peaking
-      freq: 58
+      freq: 72
       q: 0.5
       gain: 2
 
@@ -278,8 +278,8 @@ pipeline:
       - hp_protection
       - preamp_gain
       - linkwitz_transform      # Bass redesign: 93.5Hz → 50Hz punchy
-      - bass_reflex_allpass     # Phase coherence at 58Hz
-      - bass_vent_boost         # Vent boost at 58Hz
+      - bass_reflex_allpass     # Phase coherence at 72Hz
+      - bass_vent_boost         # Vent boost at 72Hz
       - hp_resonance_notch      # Cut HP resonance at 93.5Hz
       - loudness_bass_mid
       - room_correction

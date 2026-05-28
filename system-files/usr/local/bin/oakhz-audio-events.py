@@ -25,6 +25,7 @@ def play_sound(sound_file, restore_volume=True):
     """Play sound using paplay (PulseAudio) with volume adjustment"""
     try:
         logger.info(f'Playing: {sound_file}')
+        
         volume_percent = 80
         pa_volume = int(65536 * volume_percent / 100)
 
@@ -48,6 +49,15 @@ def play_sound(sound_file, restore_volume=True):
 def play_ready_sound():
     """Play ready sound at startup"""
     logger.info('Playing ready sound (Bluetooth discoverable)')
+
+    env = os.environ.copy()
+    env['PULSE_SERVER'] = 'unix:/run/pulse/native'
+
+    # Force sink to 100% before playing
+    subprocess.run(
+        ['pactl', 'set-sink-volume', 'camilladsp_out', '100%'],
+        env=env
+    )
     # Wait for audio system to be fully ready
     play_sound(SOUND_READY, restore_volume=False)
     logger.info('Ready sound played')

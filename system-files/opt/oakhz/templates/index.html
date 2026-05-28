@@ -1,10 +1,16 @@
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OaKhz Audio - Equalizer</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
             background: linear-gradient(135deg, #e8d0b8 0%, #d8c0a8 50%, #e0cab0 100%);
@@ -12,13 +18,26 @@
             min-height: 100vh;
             padding: 20px;
         }
-        .container { max-width: 1200px; margin: 0 auto; }
-        header { text-align: center; margin-bottom: 40px; }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+        }
+
         h1 {
             font-size: 2rem;
             color: #5d4037;
         }
-        .subtitle { color: #b8a894; font-size: 1rem; }
+
+        .subtitle {
+            color: #b8a894;
+            font-size: 1rem;
+        }
+
         .card {
             background: linear-gradient(135deg, #2d2520 0%, #3d3530 100%);
             backdrop-filter: blur(10px);
@@ -29,10 +48,58 @@
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
         }
 
-        /* Media Player Styles */
+        /* System Info */
+        .system-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .system-item {
+            background: rgba(90, 74, 58, 0.3);
+            border-radius: 10px;
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .system-item-label {
+            font-size: 0.72rem;
+            color: #b8a894;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .system-item-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #f5f0e8;
+            font-family: 'Courier New', monospace;
+        }
+
+        .system-item-value.warning {
+            color: #ffc107;
+        }
+
+        .system-item-value.danger {
+            color: #ef5350;
+        }
+
+        .system-item-value.ok {
+            color: #66bb6a;
+        }
+
+        .system-item-value.muted {
+            color: #8a7a6a;
+        }
+
+        /* Media Player */
         .media-player {
             margin-bottom: 24px;
         }
+
         .media-info {
             text-align: center;
             margin-bottom: 20px;
@@ -40,21 +107,25 @@
             background: rgba(90, 74, 58, 0.3);
             border-radius: 12px;
         }
+
         .media-title {
             font-size: 1.4rem;
             font-weight: 600;
             color: #f5f0e8;
             margin-bottom: 8px;
         }
+
         .media-artist {
             font-size: 1.1rem;
             color: #d4c4b0;
             margin-bottom: 4px;
         }
+
         .media-album {
             font-size: 0.9rem;
             color: #b8a894;
         }
+
         .media-status {
             display: inline-block;
             padding: 4px 12px;
@@ -64,23 +135,28 @@
             text-transform: uppercase;
             font-weight: 600;
         }
+
         .media-status.playing {
             background: rgba(76, 175, 80, 0.3);
             color: #4caf50;
         }
+
         .media-status.paused {
             background: rgba(255, 193, 7, 0.3);
             color: #ffc107;
         }
+
         .media-status.stopped {
             background: rgba(158, 158, 158, 0.3);
             color: #9e9e9e;
         }
+
         .media-controls {
             display: flex;
             justify-content: center;
             gap: 12px;
         }
+
         .media-btn {
             width: 56px;
             height: 56px;
@@ -95,26 +171,33 @@
             background: #5a4a3a;
             color: #f5f0e8;
         }
+
         .media-btn:hover {
             background: #6b5848;
             transform: scale(1.05);
         }
+
         .media-btn.play-pause {
             width: 72px;
             height: 72px;
             font-size: 1.8rem;
             background: #8b6f47;
         }
+
         .media-btn.play-pause:hover {
             background: #a58556;
         }
 
+        /* Controls */
         .controls-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
             margin-bottom: 24px;
         }
+
         .controls-title {
             display: flex;
             align-items: center;
@@ -122,6 +205,7 @@
             font-size: 1.2rem;
             font-weight: 600;
         }
+
         .btn {
             padding: 10px 20px;
             border: none;
@@ -133,23 +217,59 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            color: #f5f0e8;
         }
-        .btn-power { background: #8b6f47; }
-        .btn-power:hover { background: #a58556; }
-        .btn-power.off { background: #5a4a3a; }
-        .btn-power.off:hover { background: #6b5848; }
-        .presets { margin-bottom: 24px; }
+
+        .btn-power {
+            background: #8b6f47;
+        }
+
+        .btn-power:hover {
+            background: #a58556;
+        }
+
+        .btn-power.off {
+            background: #5a4a3a;
+        }
+
+        .btn-power.off:hover {
+            background: #6b5848;
+        }
+
+        .btn-toggle {
+            background: #5a4a3a;
+        }
+
+        .btn-toggle:hover {
+            background: #6b5848;
+        }
+
+        .btn-toggle.active {
+            background: #4a7c59;
+        }
+
+        .btn-toggle.active:hover {
+            background: #5a9068;
+        }
+
+        /* Presets */
+        .presets {
+            margin-bottom: 24px;
+        }
+
         .presets label {
             display: block;
             font-size: 0.9rem;
             color: #d4c4b0;
             margin-bottom: 12px;
         }
+
         .preset-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
             gap: 8px;
         }
+
         .preset-btn {
             padding: 10px 16px;
             background: #5a4a3a;
@@ -160,16 +280,39 @@
             transition: all 0.2s;
             text-transform: capitalize;
         }
-        .preset-btn:hover { background: #6b5848; }
-        .preset-btn.active { background: #a58556; }
-        .preset-btn.active:hover { background: #b89660; }
-        .preamp-control { margin-bottom: 24px; }
+
+        .preset-btn:hover {
+            background: #6b5848;
+        }
+
+        .preset-btn.active {
+            background: #a58556;
+        }
+
+        .preset-btn.active:hover {
+            background: #b89660;
+        }
+
+        .preset-btn.outdoor {
+            border-left: 3px solid #66bb6a;
+        }
+
+        .preset-btn.night {
+            border-left: 3px solid #7986cb;
+        }
+
+        /* Preamp */
+        .preamp-control {
+            margin-bottom: 24px;
+        }
+
         .preamp-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 8px;
         }
+
         .preamp-value {
             font-family: 'Courier New', monospace;
             background: #5a4a3a;
@@ -178,6 +321,7 @@
             font-size: 0.9rem;
             color: #f5f0e8;
         }
+
         .slider {
             width: 100%;
             height: 8px;
@@ -187,6 +331,7 @@
             -webkit-appearance: none;
             cursor: pointer;
         }
+
         .slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             width: 20px;
@@ -196,6 +341,7 @@
             cursor: pointer;
             box-shadow: 0 0 10px rgba(200, 152, 96, 0.5);
         }
+
         .slider::-moz-range-thumb {
             width: 20px;
             height: 20px;
@@ -204,33 +350,41 @@
             cursor: pointer;
             border: none;
         }
-        .slider:disabled::-webkit-slider-thumb {
-            background: #7a6a5a;
-            box-shadow: none;
-        }
+
+        /* EQ */
         .btn-reset {
             width: 100%;
             background: #5a4a3a;
             color: #f5f0e8;
             justify-content: center;
         }
-        .btn-reset:hover { background: #6b5848; }
-        .equalizer { padding: 24px; }
+
+        .btn-reset:hover {
+            background: #6b5848;
+        }
+
+        .equalizer {
+            padding: 24px;
+        }
+
         .eq-title {
             font-size: 1.2rem;
             font-weight: 600;
             margin-bottom: 24px;
         }
+
         .bands {
             display: grid;
             grid-template-columns: repeat(10, 1fr);
             gap: 16px;
         }
+
         .band {
             display: flex;
             flex-direction: column;
             align-items: center;
         }
+
         .band-slider-container {
             position: relative;
             width: 48px;
@@ -239,6 +393,7 @@
             border-radius: 8px;
             margin-bottom: 12px;
         }
+
         .band-slider {
             position: absolute;
             width: 192px;
@@ -248,6 +403,7 @@
             transform: translate(-50%, -50%) rotate(-90deg);
             transform-origin: center;
         }
+
         .band-center-line {
             position: absolute;
             top: 50%;
@@ -257,6 +413,7 @@
             background: #6b5848;
             pointer-events: none;
         }
+
         .band-value {
             font-family: 'Courier New', monospace;
             background: #5a4a3a;
@@ -266,99 +423,102 @@
             margin-bottom: 4px;
             color: #f5f0e8;
         }
+
         .band-label {
             font-size: 0.7rem;
             color: #b8a894;
             text-align: center;
         }
+
         footer {
             text-align: center;
             margin-top: 24px;
             color: #8a7a6a;
             font-size: 0.85rem;
         }
+
         @media (max-width: 768px) {
-            .bands { grid-template-columns: repeat(5, 1fr); }
+            .bands {
+                grid-template-columns: repeat(5, 1fr);
+            }
+
+            .system-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <header>
-            <!-- Speaker facade illustration -->
             <div style="display:flex; justify-content:center; margin-bottom:24px;">
-                <svg viewBox="0 0 520 200" width="100%" style="max-width:260px; filter: drop-shadow(0 6px 16px rgba(0,0,0,0.5));">
-                    <!-- Outer frame (light birch plywood) -->
+                <svg viewBox="0 0 520 200" width="100%"
+                    style="max-width:260px; filter: drop-shadow(0 6px 16px rgba(0,0,0,0.5));">
                     <rect x="0" y="0" width="520" height="200" rx="18" ry="18" fill="#d4b483" />
-                    <!-- Inner frame inset -->
                     <rect x="10" y="10" width="500" height="180" rx="12" ry="12" fill="#c9a96e" />
-
-                    <!-- Dark wood panel with horizontal grain stripes -->
                     <rect x="22" y="22" width="476" height="156" rx="6" ry="6" fill="#4a2e14" />
-                    <!-- Grain lines -->
-                    <line x1="22" y1="38" x2="498" y2="38" stroke="#3d2510" stroke-width="2.5" opacity="0.7"/>
-                    <line x1="22" y1="54" x2="498" y2="54" stroke="#5c3a1a" stroke-width="1.5" opacity="0.5"/>
-                    <line x1="22" y1="68" x2="498" y2="68" stroke="#3d2510" stroke-width="3" opacity="0.6"/>
-                    <line x1="22" y1="84" x2="498" y2="84" stroke="#5c3a1a" stroke-width="1.5" opacity="0.4"/>
-                    <line x1="22" y1="100" x2="498" y2="100" stroke="#3d2510" stroke-width="2" opacity="0.7"/>
-                    <line x1="22" y1="116" x2="498" y2="116" stroke="#5c3a1a" stroke-width="2.5" opacity="0.5"/>
-                    <line x1="22" y1="132" x2="498" y2="132" stroke="#3d2510" stroke-width="1.5" opacity="0.6"/>
-                    <line x1="22" y1="148" x2="498" y2="148" stroke="#5c3a1a" stroke-width="3" opacity="0.4"/>
-                    <line x1="22" y1="162" x2="498" y2="162" stroke="#3d2510" stroke-width="1.5" opacity="0.5"/>
-
-                    <!-- LEFT SPEAKER — center x=102, y=100 -->
-                    <circle cx="80"  cy="44"  r="4" fill="#222" /><circle cx="80"  cy="44"  r="1.5" fill="#555"/>
-                    <circle cx="174" cy="44"  r="4" fill="#222" /><circle cx="174" cy="44"  r="1.5" fill="#555"/>
-                    <circle cx="80"  cy="156" r="4" fill="#222" /><circle cx="80"  cy="156" r="1.5" fill="#555"/>
-                    <circle cx="174" cy="156" r="4" fill="#222" /><circle cx="174" cy="156" r="1.5" fill="#555"/>
+                    <line x1="22" y1="38" x2="498" y2="38" stroke="#3d2510" stroke-width="2.5" opacity="0.7" />
+                    <line x1="22" y1="54" x2="498" y2="54" stroke="#5c3a1a" stroke-width="1.5" opacity="0.5" />
+                    <line x1="22" y1="68" x2="498" y2="68" stroke="#3d2510" stroke-width="3" opacity="0.6" />
+                    <line x1="22" y1="84" x2="498" y2="84" stroke="#5c3a1a" stroke-width="1.5" opacity="0.4" />
+                    <line x1="22" y1="100" x2="498" y2="100" stroke="#3d2510" stroke-width="2" opacity="0.7" />
+                    <line x1="22" y1="116" x2="498" y2="116" stroke="#5c3a1a" stroke-width="2.5" opacity="0.5" />
+                    <line x1="22" y1="132" x2="498" y2="132" stroke="#3d2510" stroke-width="1.5" opacity="0.6" />
+                    <line x1="22" y1="148" x2="498" y2="148" stroke="#5c3a1a" stroke-width="3" opacity="0.4" />
+                    <line x1="22" y1="162" x2="498" y2="162" stroke="#3d2510" stroke-width="1.5" opacity="0.5" />
+                    <circle cx="80" cy="44" r="4" fill="#222" />
+                    <circle cx="80" cy="44" r="1.5" fill="#555" />
+                    <circle cx="174" cy="44" r="4" fill="#222" />
+                    <circle cx="174" cy="44" r="1.5" fill="#555" />
+                    <circle cx="80" cy="156" r="4" fill="#222" />
+                    <circle cx="80" cy="156" r="1.5" fill="#555" />
+                    <circle cx="174" cy="156" r="4" fill="#222" />
+                    <circle cx="174" cy="156" r="1.5" fill="#555" />
                     <circle cx="127" cy="100" r="64" fill="#1a0f05" />
                     <circle cx="127" cy="100" r="60" fill="#2a1a0a" />
                     <circle cx="127" cy="100" r="52" fill="#111" />
                     <circle cx="127" cy="100" r="50" fill="url(#speakerGrad)" />
-                    <circle cx="127" cy="100" r="40" fill="none" stroke="#1a1a1a" stroke-width="2.5"/>
-                    <circle cx="127" cy="100" r="30" fill="none" stroke="#222" stroke-width="2"/>
-                    <circle cx="127" cy="100" r="20" fill="none" stroke="#1a1a1a" stroke-width="1.5"/>
+                    <circle cx="127" cy="100" r="40" fill="none" stroke="#1a1a1a" stroke-width="2.5" />
+                    <circle cx="127" cy="100" r="30" fill="none" stroke="#222" stroke-width="2" />
+                    <circle cx="127" cy="100" r="20" fill="none" stroke="#1a1a1a" stroke-width="1.5" />
                     <circle cx="127" cy="100" r="12" fill="#0d0d0d" />
-                    <circle cx="127" cy="100" r="8"  fill="#161616" />
-                    <circle cx="117"  cy="88"  r="5"  fill="white" opacity="0.08"/>
-
-                    <!-- RIGHT SPEAKER — center x=418, y=100 -->
-                    <circle cx="346" cy="44"  r="4" fill="#222" /><circle cx="346" cy="44"  r="1.5" fill="#555"/>
-                    <circle cx="440" cy="44"  r="4" fill="#222" /><circle cx="440" cy="44"  r="1.5" fill="#555"/>
-                    <circle cx="346" cy="156" r="4" fill="#222" /><circle cx="346" cy="156" r="1.5" fill="#555"/>
-                    <circle cx="440" cy="156" r="4" fill="#222" /><circle cx="440" cy="156" r="1.5" fill="#555"/>
+                    <circle cx="127" cy="100" r="8" fill="#161616" />
+                    <circle cx="117" cy="88" r="5" fill="white" opacity="0.08" />
+                    <circle cx="346" cy="44" r="4" fill="#222" />
+                    <circle cx="346" cy="44" r="1.5" fill="#555" />
+                    <circle cx="440" cy="44" r="4" fill="#222" />
+                    <circle cx="440" cy="44" r="1.5" fill="#555" />
+                    <circle cx="346" cy="156" r="4" fill="#222" />
+                    <circle cx="346" cy="156" r="1.5" fill="#555" />
+                    <circle cx="440" cy="156" r="4" fill="#222" />
+                    <circle cx="440" cy="156" r="1.5" fill="#555" />
                     <circle cx="395" cy="100" r="64" fill="#1a0f05" />
                     <circle cx="395" cy="100" r="60" fill="#2a1a0a" />
                     <circle cx="395" cy="100" r="52" fill="#111" />
                     <circle cx="395" cy="100" r="50" fill="url(#speakerGrad2)" />
-                    <circle cx="395" cy="100" r="40" fill="none" stroke="#1a1a1a" stroke-width="2.5"/>
-                    <circle cx="395" cy="100" r="30" fill="none" stroke="#222" stroke-width="2"/>
-                    <circle cx="395" cy="100" r="20" fill="none" stroke="#1a1a1a" stroke-width="1.5"/>
+                    <circle cx="395" cy="100" r="40" fill="none" stroke="#1a1a1a" stroke-width="2.5" />
+                    <circle cx="395" cy="100" r="30" fill="none" stroke="#222" stroke-width="2" />
+                    <circle cx="395" cy="100" r="20" fill="none" stroke="#1a1a1a" stroke-width="1.5" />
                     <circle cx="395" cy="100" r="12" fill="#0d0d0d" />
-                    <circle cx="395" cy="100" r="8"  fill="#161616" />
-                    <circle cx="385" cy="88"  r="5"  fill="white" opacity="0.08"/>
-
-                    <!-- CENTER TRIANGULAR BASS PORT — center x=260, base collée y=178, apex y=50 -->
+                    <circle cx="395" cy="100" r="8" fill="#161616" />
+                    <circle cx="385" cy="88" r="5" fill="white" opacity="0.08" />
                     <polygon points="200,178 260,100 320,178" fill="#c9a96e" />
                     <circle cx="260" cy="150" r="20" fill="#0a0805" />
-                    
-            
-                    <!-- Gradient defs -->
                     <defs>
                         <radialGradient id="speakerGrad" cx="40%" cy="35%" r="65%">
-                            <stop offset="0%" stop-color="#3a3a3a"/>
-                            <stop offset="50%" stop-color="#1c1c1c"/>
-                            <stop offset="100%" stop-color="#0a0a0a"/>
+                            <stop offset="0%" stop-color="#3a3a3a" />
+                            <stop offset="50%" stop-color="#1c1c1c" />
+                            <stop offset="100%" stop-color="#0a0a0a" />
                         </radialGradient>
                         <radialGradient id="speakerGrad2" cx="40%" cy="35%" r="65%">
-                            <stop offset="0%" stop-color="#3a3a3a"/>
-                            <stop offset="50%" stop-color="#1c1c1c"/>
-                            <stop offset="100%" stop-color="#0a0a0a"/>
+                            <stop offset="0%" stop-color="#3a3a3a" />
+                            <stop offset="50%" stop-color="#1c1c1c" />
+                            <stop offset="100%" stop-color="#0a0a0a" />
                         </radialGradient>
                     </defs>
                 </svg>
             </div>
-            <h1>• oaKhz audio •</h1>
         </header>
 
         <!-- Media Player Card -->
@@ -367,14 +527,12 @@
                 <span>🎧</span>
                 <span>Now Playing</span>
             </div>
-
             <div class="media-info">
                 <div class="media-title" id="mediaTitle">No media playing</div>
                 <div class="media-artist" id="mediaArtist">Unknown Artist</div>
                 <div class="media-album" id="mediaAlbum"></div>
                 <span class="media-status stopped" id="mediaStatus">stopped</span>
             </div>
-
             <div class="media-controls">
                 <button class="media-btn" onclick="mediaPrevious()" title="Previous">⏮</button>
                 <button class="media-btn play-pause" onclick="mediaPlayPause()" title="Play/Pause">
@@ -384,17 +542,62 @@
             </div>
         </div>
 
+        <!-- System Info Card -->
+        <div class="card">
+            <div class="controls-title" style="margin-bottom: 4px;">
+                <span>📡</span>
+                <span>System</span>
+            </div>
+            <div class="system-grid">
+                <div class="system-item">
+                    <span class="system-item-label">IP Address</span>
+                    <span class="system-item-value" id="sysIp">—</span>
+                </div>
+                <div class="system-item">
+                    <span class="system-item-label">CPU Temp</span>
+                    <span class="system-item-value" id="sysCpuTemp">—</span>
+                </div>
+                <div class="system-item">
+                    <span class="system-item-label">CPU Usage</span>
+                    <span class="system-item-value" id="sysCpuUsage">—</span>
+                </div>
+                <div class="system-item">
+                    <span class="system-item-label">RAM Usage</span>
+                    <span class="system-item-value" id="sysRam">—</span>
+                </div>
+                <div class="system-item">
+                    <span class="system-item-label">Uptime</span>
+                    <span class="system-item-value" id="sysUptime">—</span>
+                </div>
+                <div class="system-item">
+                    <span class="system-item-label">DSP</span>
+                    <span class="system-item-value" id="sysDsp">—</span>
+                </div>
+                <div class="system-item" style="grid-column: span 2;">
+                    <span class="system-item-label">Bluetooth</span>
+                    <span class="system-item-value" id="sysBluetooth" style="font-size:0.85rem;">—</span>
+                </div>
+            </div>
+        </div>
+
         <!-- Equalizer Card -->
         <div class="card">
             <div class="controls-header">
                 <div class="controls-title">
                     <span>🔊</span>
-                    <span>Equalizer Status</span>
+                    <span>Equalizer</span>
                 </div>
-                <button class="btn btn-power" id="powerBtn" onclick="togglePower()">
-                    <span>⚡</span>
-                    <span id="powerText">ON</span>
-                </button>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-toggle" id="adaptiveBtn" onclick="toggleAdaptiveVolume()"
+                        title="Adaptive Volume">
+                        <span>🌙</span>
+                        <span id="adaptiveText">Adaptive</span>
+                    </button>
+                    <button class="btn btn-power" id="powerBtn" onclick="togglePower()">
+                        <span>⚡</span>
+                        <span id="powerText">ON</span>
+                    </button>
+                </div>
             </div>
 
             <div class="presets">
@@ -408,6 +611,8 @@
                     <button class="preset-btn" onclick="applyPreset('bass')">Bass</button>
                     <button class="preset-btn" onclick="applyPreset('treble')">Treble</button>
                     <button class="preset-btn" onclick="applyPreset('vocal')">Vocal</button>
+                    <button class="preset-btn outdoor" onclick="applyPreset('outdoor')">🌳 Outdoor</button>
+                    <button class="preset-btn night" onclick="applyPreset('night')">🌙 Night</button>
                 </div>
             </div>
 
@@ -417,12 +622,12 @@
                     <span class="preamp-value" id="preampValue">0 dB</span>
                 </div>
                 <input type="range" class="slider" id="preampSlider" min="-12" max="12" value="0"
-                       oninput="updatePreamp(this.value)">
+                    oninput="updatePreamp(this.value)">
             </div>
 
-            <button class="btn btn-reset" onclick="resetEqualizer()">
+            <button class="btn btn-reset" onclick="resetToDefault()">
                 <span>🔄</span>
-                <span>Reset to Flat</span>
+                <span>Reset to default</span>
             </button>
         </div>
 
@@ -432,6 +637,7 @@
         </div>
 
         <footer>
+            <h3>• oaKhz audio •</h3>
         </footer>
     </div>
 
@@ -445,67 +651,85 @@
             classical: [5, 4, 3, 2, -1, -1, 0, 2, 3, 4],
             bass: [6, 5, 4, 2, 0, -1, -2, -3, -3, -3],
             treble: [-3, -3, -2, -1, 0, 2, 4, 5, 6, 6],
-            vocal: [-2, -3, -2, 1, 3, 3, 2, 1, 0, -1]
+            vocal: [-2, -3, -2, 1, 3, 3, 2, 1, 0, -1],
+            outdoor: [6, 6, 5, 2, -1, 0, 2, 5, 6, 6],
+            night: [2, 3, 4, 3, 3, 4, 3, 2, 1, 0],
         };
 
         let enabled = true;
-        let currentPreset = 'flat';
+        let currentPreset = 'default';
         let bandValues = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         let debounceTimers = {};
-        let mediaUpdateInterval;
+        let adaptiveVolume = false;
 
-        // Media Control Functions
+        // --- System Info ---
+        function updateSystemInfo() {
+            fetch('/api/system/info')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('sysIp').textContent = data.ip || '—';
+
+                    const temp = data.cpu_temp;
+                    const tempEl = document.getElementById('sysCpuTemp');
+                    tempEl.textContent = temp != null ? `${temp}°C` : '—';
+                    tempEl.className = 'system-item-value ' + (temp > 70 ? 'danger' : temp > 55 ? 'warning' : 'ok');
+
+                    const cpu = data.cpu_usage;
+                    const cpuEl = document.getElementById('sysCpuUsage');
+                    cpuEl.textContent = cpu != null ? `${cpu}%` : '—';
+                    cpuEl.className = 'system-item-value ' + (cpu > 80 ? 'danger' : cpu > 60 ? 'warning' : 'ok');
+
+                    const ram = data.ram_usage;
+                    const ramEl = document.getElementById('sysRam');
+                    ramEl.textContent = ram != null ? `${ram}%` : '—';
+                    ramEl.className = 'system-item-value ' + (ram > 80 ? 'danger' : ram > 60 ? 'warning' : 'ok');
+
+                    document.getElementById('sysUptime').textContent = data.uptime || '—';
+
+                    const dspEl = document.getElementById('sysDsp');
+                    dspEl.textContent = data.camilladsp || '—';
+                    dspEl.className = 'system-item-value ' + (data.camilladsp === 'active' ? 'ok' : 'danger');
+
+                    const btEl = document.getElementById('sysBluetooth');
+                    btEl.textContent = data.bluetooth_device || 'No device';
+                    btEl.className = 'system-item-value ' + (data.bluetooth_device ? 'ok' : 'muted');
+                })
+                .catch(() => { });
+        }
+
+        // --- Media ---
         function updateMediaInfo() {
             fetch('/api/media/info')
-                .then(response => response.json())
+                .then(r => r.json())
                 .then(data => {
                     document.getElementById('mediaTitle').textContent = data.title || 'No media playing';
                     document.getElementById('mediaArtist').textContent = data.artist || 'Unknown Artist';
                     document.getElementById('mediaAlbum').textContent = data.album || '';
-
                     const statusEl = document.getElementById('mediaStatus');
-                    const playPauseIcon = document.getElementById('playPauseIcon');
-
                     statusEl.className = 'media-status ' + (data.status || 'stopped');
                     statusEl.textContent = data.status || 'stopped';
-
-                    if (data.status === 'playing') {
-                        playPauseIcon.textContent = '⏸';
-                    } else {
-                        playPauseIcon.textContent = '▶️';
-                    }
+                    document.getElementById('playPauseIcon').textContent = data.status === 'playing' ? '⏸' : '▶️';
                 })
-                .catch(error => console.error('Error fetching media info:', error));
+                .catch(() => { });
         }
 
         function mediaPlayPause() {
             fetch('/api/media/play-pause', { method: 'POST' })
-                .then(response => response.json())
-                .then(() => {
-                    setTimeout(updateMediaInfo, 200);
-                })
-                .catch(error => console.error('Error:', error));
+                .then(() => setTimeout(updateMediaInfo, 200))
+                .catch(() => { });
         }
-
         function mediaNext() {
             fetch('/api/media/next', { method: 'POST' })
-                .then(response => response.json())
-                .then(() => {
-                    setTimeout(updateMediaInfo, 200);
-                })
-                .catch(error => console.error('Error:', error));
+                .then(() => setTimeout(updateMediaInfo, 200))
+                .catch(() => { });
         }
-
         function mediaPrevious() {
             fetch('/api/media/previous', { method: 'POST' })
-                .then(response => response.json())
-                .then(() => {
-                    setTimeout(updateMediaInfo, 200);
-                })
-                .catch(error => console.error('Error:', error));
+                .then(() => setTimeout(updateMediaInfo, 200))
+                .catch(() => { });
         }
 
-        // Equalizer Functions
+        // --- EQ ---
         function initBands() {
             const container = document.getElementById('bands');
             frequencies.forEach((freq, index) => {
@@ -514,8 +738,7 @@
                 band.innerHTML = `
                     <div class="band-slider-container">
                         <input type="range" class="slider band-slider"
-                               id="band${index}"
-                               min="-12" max="12" value="0"
+                               id="band${index}" min="-12" max="12" value="0"
                                oninput="updateBand(${index}, this.value)">
                         <div class="band-center-line"></div>
                     </div>
@@ -531,10 +754,7 @@
             document.getElementById(`bandValue${index}`).textContent = value > 0 ? `+${value}` : value;
             currentPreset = 'custom';
             updatePresetButtons();
-
-            if (debounceTimers[`band_${index}`]) {
-                clearTimeout(debounceTimers[`band_${index}`]);
-            }
+            if (debounceTimers[`band_${index}`]) clearTimeout(debounceTimers[`band_${index}`]);
             debounceTimers[`band_${index}`] = setTimeout(() => {
                 sendToBackend('band', { index, value: parseInt(value) });
             }, 150);
@@ -542,10 +762,7 @@
 
         function updatePreamp(value) {
             document.getElementById('preampValue').textContent = `${value > 0 ? '+' : ''}${value} dB`;
-
-            if (debounceTimers.preamp) {
-                clearTimeout(debounceTimers.preamp);
-            }
+            if (debounceTimers.preamp) clearTimeout(debounceTimers.preamp);
             debounceTimers.preamp = setTimeout(() => {
                 sendToBackend('preamp', { value: parseInt(value) });
             }, 150);
@@ -554,41 +771,36 @@
         function togglePower() {
             enabled = !enabled;
             const btn = document.getElementById('powerBtn');
-            const text = document.getElementById('powerText');
-
-            if (enabled) {
-                btn.classList.remove('off');
-                text.textContent = 'ON';
-            } else {
-                btn.classList.add('off');
-                text.textContent = 'OFF';
-            }
-
+            document.getElementById('powerText').textContent = enabled ? 'ON' : 'OFF';
+            btn.classList.toggle('off', !enabled);
             sendToBackend('enabled', { value: enabled });
+        }
+
+        function toggleAdaptiveVolume() {
+            adaptiveVolume = !adaptiveVolume;
+            const btn = document.getElementById('adaptiveBtn');
+            btn.classList.toggle('active', adaptiveVolume);
+            document.getElementById('adaptiveText').textContent = adaptiveVolume ? 'Adaptive ON' : 'Adaptive';
+            sendToBackend('adaptive_volume', { value: adaptiveVolume });
         }
 
         function applyPreset(presetName) {
             currentPreset = presetName;
             const values = presets[presetName];
-
+            if (!values) return;
             values.forEach((value, index) => {
                 bandValues[index] = value;
                 document.getElementById(`band${index}`).value = value;
                 document.getElementById(`bandValue${index}`).textContent = value > 0 ? `+${value}` : value;
             });
-
             updatePresetButtons();
             sendToBackend('preset', { name: presetName });
         }
 
         function updatePresetButtons() {
             document.querySelectorAll('.preset-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.querySelectorAll('.preset-btn').forEach(btn => {
-                if (btn.textContent.toLowerCase() === currentPreset) {
-                    btn.classList.add('active');
-                }
+                const name = btn.textContent.replace(/[^a-zA-Z]/g, '').toLowerCase();
+                btn.classList.toggle('active', name === currentPreset);
             });
         }
 
@@ -604,21 +816,34 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ type, data })
             })
-            .then(response => response.json())
-            .then(data => console.log('Success:', data))
-            .catch(error => console.error('Error:', error));
+                .then(r => r.json())
+                .catch(() => { });
+        }
+
+        function resetToDefault() {
+            fetch('/api/equalizer/reset-default', { method: 'POST' })
+                .then(r => r.json())
+                .then(config => {
+                    loadConfig();
+                })
+                .catch(() => { });
         }
 
         function loadConfig() {
             fetch('/api/equalizer')
-                .then(response => response.json())
+                .then(r => r.json())
                 .then(config => {
                     enabled = config.enabled;
                     currentPreset = config.preset;
+                    adaptiveVolume = config.adaptive_volume || false;
 
                     if (!enabled) {
                         document.getElementById('powerBtn').classList.add('off');
                         document.getElementById('powerText').textContent = 'OFF';
+                    }
+                    if (adaptiveVolume) {
+                        document.getElementById('adaptiveBtn').classList.add('active');
+                        document.getElementById('adaptiveText').textContent = 'Adaptive ON';
                     }
 
                     config.bands.forEach((value, index) => {
@@ -631,16 +856,18 @@
 
                     updatePresetButtons();
                 })
-                .catch(error => console.error('Error loading config:', error));
+                .catch(() => { });
         }
 
-        // Initialize
+        // Init
         initBands();
         loadConfig();
         updateMediaInfo();
+        updateSystemInfo();
 
-        // Update media info every 2 seconds
-        mediaUpdateInterval = setInterval(updateMediaInfo, 2000);
+        setInterval(updateMediaInfo, 2000);
+        setInterval(updateSystemInfo, 10000);  // refresh system info every 10s
     </script>
 </body>
+
 </html>

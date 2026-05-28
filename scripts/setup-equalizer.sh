@@ -85,7 +85,8 @@ apt install -y \
     python3-flask \
     python3-flask-cors \
     python3-yaml \
-    python3-websocket
+    python3-websocket \
+    python3-ruamel.yaml
 
 echo -e "${GREEN}✓ Python dependencies installed${NC}"
 
@@ -107,6 +108,8 @@ copy_system_file "opt/oakhz/templates/index.html" "$INSTALL_DIR/templates/index.
 
 # Service systemd pour l'equalizer
 copy_system_file "etc/systemd/system/oakhz-equalizer.service" "/etc/systemd/system/oakhz-equalizer.service"
+
+copy_system_file "/opt/camilladsp/config.yml" "/opt/camilladsp/config.default.yml"
 
 echo -e "${GREEN}✓ Web interface installed${NC}"
 

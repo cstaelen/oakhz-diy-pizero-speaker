@@ -16,6 +16,7 @@ devices:
 filters:
 
   # --- PEAK LIMITER ---
+  # Soft brick-wall limiter to prevent clipping at high volume
   peak_limiter:
     type: Gain
     parameters:
@@ -23,14 +24,15 @@ filters:
       inverted: false
 
   # --- PREAMP ---
-  # Reduced to leave headroom for bass boosts
+  # Slightly reduced to leave headroom for new boosts
   preamp_gain:
     type: Gain
     parameters:
-      gain: 1
+      gain: 3
       inverted: false
 
   # --- DRIVER PROTECTION ---
+  # High-pass filter to protect 80mm drivers below their physical limit
   hp_protection:
     type: Biquad
     parameters:
@@ -38,59 +40,46 @@ filters:
       freq: 45
       q: 0.7
 
-  # --- LINKWITZ TRANSFORM ---
-  # DMA80-4: f0=93.5Hz, q0=0.41
-  # Target: fp=50Hz, qp=0.5 (more punchy than Butterworth 0.707)
-  # qp=0.5 gives tighter, more controlled bass vs 0.707 which is flatter
-  linkwitz_transform:
+  # --- SUB SHELF ---
+  # Aggressive low shelf to simulate sub-bass depth
+  # Pushes the bass reflex vent to its physical limit at ~58Hz
+  sub_shelf:
     type: Biquad
     parameters:
-      type: LinkwitzTransform
-      freq_act: 93.5
-      q_act: 0.41
-      freq_target: 50.0
-      q_target: 0.5
-
-  # --- BASS REFLEX ALLPASS ---
-  # Compensates group delay of bass reflex at vent tuning frequency
-  # Makes bass "tighter" and less "boomy" — phase coherence at 58Hz
-  bass_reflex_allpass:
-    type: Biquad
-    parameters:
-      type: Allpass
-      freq: 58
-      q: 0.7
+      type: Lowshelf
+      freq: 40
+      slope: 6
+      gain: 4
 
   # --- BASS VENT BOOST ---
   # Precise Peaking at bass reflex tuning frequency (58Hz)
-  # Reduced vs previous — Linkwitz already handles the extension
+  # Wide Q=0.5 for natural, musical bass enhancement
+  # This is the key JBL/Bose "punch" technique
   bass_vent_boost:
     type: Biquad
     parameters:
       type: Peaking
       freq: 58
       q: 0.5
-      gain: 2
+      gain: 5
 
-  # --- HP RESONANCE NOTCH ---
-  # Cuts the natural resonance of DMA80-4 at Fs=93.5Hz
-  # Reduces coloration and "one-note bass" effect in the mid-bass
-  hp_resonance_notch:
+  # --- LOUDNESS BASS ---
+  loudness_bass_low:
     type: Biquad
     parameters:
       type: Peaking
-      freq: 93.5
-      q: 2.0
-      gain: -3
+      freq: 58
+      q: 0.9
+      gain: 4
 
-  # --- LOUDNESS BASS MID ---
+  # Mid-bass punch
   loudness_bass_mid:
     type: Biquad
     parameters:
       type: Peaking
       freq: 100
       q: 1.2
-      gain: 2
+      gain: 3
 
   # --- ROOM CORRECTION ---
   room_correction:
@@ -128,6 +117,8 @@ filters:
       gain: 2
 
   # --- HARMONIC EXCITER ---
+  # Additional high shelf at 6kHz for air and brilliance
+  # Simulates harmonic exciter effect used in JBL/Bose
   harmonic_exciter:
     type: Biquad
     parameters:
@@ -145,26 +136,8 @@ filters:
       slope: 6
       gain: 4
 
-  # --- SPATIAL CROSSOVER ---
-  # Left: warm, bass-forward
-  spatial_left_bass:
-    type: Biquad
-    parameters:
-      type: Lowshelf
-      freq: 200
-      slope: 6
-      gain: 2
-
-  # Right: airy, treble-forward
-  spatial_right_treble:
-    type: Biquad
-    parameters:
-      type: Highshelf
-      freq: 3000
-      slope: 6
-      gain: 2
-
   # --- 10-BAND PARAMETRIC EQ ---
+  # Calibrated from RTA measurement session
   eq_31:
     type: Biquad
     parameters:
@@ -270,25 +243,22 @@ mixers:
             inverted: true
 
 pipeline:
-  # LEFT channel — warm, bass-forward
   - type: Filter
     channel: 0
     names:
       - peak_limiter
       - hp_protection
       - preamp_gain
-      - linkwitz_transform      # Bass redesign: 93.5Hz → 50Hz punchy
-      - bass_reflex_allpass     # Phase coherence at 58Hz
-      - bass_vent_boost         # Vent boost at 58Hz
-      - hp_resonance_notch      # Cut HP resonance at 93.5Hz
+      - sub_shelf           # Sub-bass depth simulation
+      - bass_vent_boost     # Bass reflex exploitation at 58Hz
+      - loudness_bass_low
       - loudness_bass_mid
       - room_correction
       - mid_cut_low
       - mid_cut_high
       - presence
-      - harmonic_exciter
+      - harmonic_exciter    # Air and brilliance above 6kHz
       - loudness_treble
-      - spatial_left_bass       # Spatial: warm left
       - eq_31
       - eq_63
       - eq_125
@@ -300,17 +270,15 @@ pipeline:
       - eq_8k
       - eq_16k
 
-  # RIGHT channel — airy, treble-forward
   - type: Filter
     channel: 1
     names:
       - peak_limiter
       - hp_protection
       - preamp_gain
-      - linkwitz_transform
-      - bass_reflex_allpass
+      - sub_shelf
       - bass_vent_boost
-      - hp_resonance_notch
+      - loudness_bass_low
       - loudness_bass_mid
       - room_correction
       - mid_cut_low
@@ -318,7 +286,6 @@ pipeline:
       - presence
       - harmonic_exciter
       - loudness_treble
-      - spatial_right_treble    # Spatial: airy right
       - eq_31
       - eq_63
       - eq_125

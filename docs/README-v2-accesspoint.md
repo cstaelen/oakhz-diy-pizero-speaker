@@ -234,15 +234,22 @@ When the AP is unreachable and you need to connect the device to your home WiFi 
 
 1. Power off the device
 2. Remove the SD card and insert it into a PC
-3. Create an empty file at the root of the boot partition:
+3. Find the boot partition volume name:
+   - On Linux: mounted at `/media/boot` (or similar)
+   - On Mac: `ls /Volumes/` — look for `bootfs` or similar
+   - On Windows: the boot drive letter (e.g. `D:`)
+
+4. Create an empty file `enable-wifi-client` on the boot partition:
+   ```bash
+   # Linux
+   touch /media/boot/enable-wifi-client
+   # Mac
+   touch /Volumes/bootfs/enable-wifi-client
    ```
-   /boot/firmware/enable-wifi-client
-   ```
-   On Linux/Mac: `touch /media/boot/enable-wifi-client`  
-   On Windows: create an empty file named `enable-wifi-client` (no extension) in the boot drive
-4. Reinsert the SD card and boot
-5. The device will stop AP services and start NetworkManager
-6. Connect to your home router to find the assigned IP, then access:
+
+5. Reinsert the SD card and boot
+6. The device will stop AP services and start NetworkManager, which will connect to previously saved WiFi networks
+7. Connect to your home router to find the assigned IP, then access:
    - Equalizer: `http://[home-network-IP]`
    - SSH: `ssh oakhz@[home-network-IP]`
 
