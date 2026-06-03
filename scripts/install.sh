@@ -132,6 +132,9 @@ echo -e "${YELLOW}[6/8] PulseAudio and CamillaDSP configuration...${NC}"
 # PulseAudio system service
 copy_system_file "etc/systemd/system/pulseaudio.service" "/etc/systemd/system/pulseaudio.service"
 
+# Disable HDMI audio/GPU to prevent MESA/Vulkan timeout during PulseAudio init
+copy_system_file "etc/modprobe.d/oakhz-nohdmi.conf" "/etc/modprobe.d/oakhz-nohdmi.conf"
+
 # Add pulse to bluetooth group
 usermod -a -G bluetooth pulse
 
@@ -140,6 +143,9 @@ sed -i 's/load-module module-udev-detect$/load-module module-udev-detect ignore_
 
 # Add Bluetooth and CamillaDSP à system.pa
 cat "$SYSTEM_FILES/pulseaudio/system.pa.append" >> /etc/pulse/system.pa
+
+# Apply modprobe blacklist to initramfs (required for vc4 blacklist to take effect at boot)
+update-initramfs -u
 
 # Load ALSA loopback module pour CamillaDSP
 if ! lsmod | grep -q snd_aloop; then

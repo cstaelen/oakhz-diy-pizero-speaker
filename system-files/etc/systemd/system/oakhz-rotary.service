@@ -1,7 +1,7 @@
 [Unit]
 Description=OaKhz Rotary Encoder Controller
-After=pulseaudio.service bluetooth.service sound.target
-Wants=pulseaudio.service
+Wants=pulseaudio.service bluetooth.service
+DefaultDependencies=no
 
 [Service]
 Type=simple
@@ -9,8 +9,7 @@ User={{SERVICE_USER}}
 Group=gpio
 SupplementaryGroups=audio
 WorkingDirectory=/home/{{SERVICE_USER}}
-ExecStartPre=/bin/sleep 5
-ExecStartPre=/bin/sh -c 'until pactl info >/dev/null 2>&1; do sleep 1; done'
+ExecStartPre=/bin/sh -c 'until pactl info >/dev/null 2>&1; do sleep 0.2; done'
 ExecStartPre=/usr/bin/pactl set-sink-volume camilladsp_out 75%
 ExecStart=/usr/bin/python3 /usr/local/bin/oakhz-rotary.py
 Restart=always

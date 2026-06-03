@@ -1,11 +1,15 @@
 [Unit]
 Description=PulseAudio system server
-After=bluetooth.service
+After=sound.target
+Wants=sound.target bluetooth.service
+DefaultDependencies=no
 
 [Service]
 Type=notify
 ExecStart=/usr/bin/pulseaudio --system --disallow-exit --log-target=journal
 Restart=on-failure
+Environment="GST_PLUGIN_PATH="
+Environment="GST_PLUGIN_SYSTEM_PATH="
 
 [Install]
 WantedBy=multi-user.target

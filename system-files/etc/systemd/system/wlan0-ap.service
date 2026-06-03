@@ -1,6 +1,7 @@
 [Unit]
 Description=Configure wlan0 for Access Point mode
 Before=hostapd.service dnsmasq.service
+DefaultDependencies=no
 
 [Service]
 Type=oneshot

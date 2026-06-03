@@ -1,14 +1,13 @@
 [Unit]
 Description=OaKhz Audio Events Manager
-After=sound.target bluetooth.target pulseaudio.service
-Wants=bluetooth.service
+Wants=pulseaudio.service bluetooth.service
+DefaultDependencies=no
 
 [Service]
 Type=simple
 User=oakhz
 Group=audio
-#ExecStartPre=/bin/sleep 5
-ExecStartPre=/bin/sh -c 'until pactl info >/dev/null 2>&1; do sleep 1; done'
+ExecStartPre=/bin/sh -c 'until pactl info >/dev/null 2>&1; do sleep 0.2; done'
 ExecStart=/usr/bin/python3 /usr/local/bin/oakhz-audio-events.py
 Restart=always
 RestartSec=5

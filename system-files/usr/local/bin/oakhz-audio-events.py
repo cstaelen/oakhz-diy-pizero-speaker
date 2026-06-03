@@ -26,7 +26,7 @@ def play_sound(sound_file, restore_volume=True):
     try:
         logger.info(f'Playing: {sound_file}')
         
-        volume_percent = 80
+        volume_percent = 60
         pa_volume = int(65536 * volume_percent / 100)
 
         env = os.environ.copy()

@@ -23,10 +23,10 @@ SW_PIN = 22   # button
 # Volume settings
 MIN_VOLUME = 1
 MAX_VOLUME = 100
-VOLUME_STEP = 3
+VOLUME_STEP = 5
 
 # Throttling settings
-THROTTLE_DELAY = 0.15  # 150ms between volume changes
+THROTTLE_DELAY = 0.05  # 50ms between volume changes
 last_volume_change = 0
 volume_lock = threading.Lock()
 
