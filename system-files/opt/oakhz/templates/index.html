@@ -636,6 +636,26 @@
             <div class="bands" id="bands"></div>
         </div>
 
+        <!-- Recovery Mode Card -->
+        <div class="card" style="margin-bottom: 24px;">
+            <div class="controls-title" style="margin-bottom: 12px;">
+                <span>🔧</span>
+                <span>Recovery mode</span>
+            </div>
+            <p style="font-size: 0.85rem; color: #b8a894; margin-bottom: 16px;">
+                Once active, connect to your Wi-Fi and access <strong style="color:#f5f0e8;">http://oakhz.local</strong>
+                <br />
+                Once inactive, connect to Oakhz Wi-Fi access point. UI URL:  <strong style="color:#f5f0e8;">http://192.168.50.1</strong>
+            </p>
+            <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+                <button class="btn" id="recoveryBtn" onclick="toggleRecovery()" style="background:#5a4a3a; white-space:nowrap;">
+                    <span id="recoveryIcon">🌐</span>
+                    <span id="recoveryText">Start recovery mode</span>
+                </button>
+                <span style="font-size:0.78rem; color:#8a7a6a;">To set your network, update <code style="color:#b8a894;">/etc/NetworkManager/system-connections/preconfigured.nmconnection</code> with your Wi-Fi info</span>
+            </div>
+        </div>
+
         <footer>
             <h3>• oaKhz audio •</h3>
         </footer>
@@ -667,7 +687,8 @@
             fetch('/api/system/info')
                 .then(r => r.json())
                 .then(data => {
-                    document.getElementById('sysIp').textContent = data.ip || '—';
+                    const ip = data.ip === "127.0.1.1" ? "192.168.50.1" : data.ip;
+                    document.getElementById('sysIp').textContent = ip || '—';
 
                     const temp = data.cpu_temp;
                     const tempEl = document.getElementById('sysCpuTemp');
@@ -859,11 +880,44 @@
                 .catch(() => { });
         }
 
+        // --- Recovery Mode ---
+        let recoveryActive = false;
+
+        function updateRecoveryBtn() {
+            const btn = document.getElementById('recoveryBtn');
+            document.getElementById('recoveryIcon').textContent = recoveryActive ? '⚠️' : '🌐';
+            document.getElementById('recoveryText').textContent = recoveryActive ? 'Quit recovery mode' : 'Start recovery mode';
+            btn.style.background = recoveryActive ? '#7a3030' : '#5a4a3a';
+        }
+
+        function toggleRecovery() {
+            if (recoveryActive) {
+                fetch('/api/recovery/quit', { method: 'POST' })
+                    .then(r => r.json())
+                    .then(() => { recoveryActive = false; updateRecoveryBtn(); })
+                    .catch(() => { });
+            } else {
+                if (!confirm('Start recovery mode? The AP will stop and NetworkManager will connect to a saved Wi-Fi network.')) return;
+                fetch('/api/recovery/start', { method: 'POST' })
+                    .then(r => r.json())
+                    .then(() => { recoveryActive = true; updateRecoveryBtn(); })
+                    .catch(() => { });
+            }
+        }
+
+        function loadRecoveryStatus() {
+            fetch('/api/recovery')
+                .then(r => r.json())
+                .then(data => { recoveryActive = data.active; updateRecoveryBtn(); })
+                .catch(() => { });
+        }
+
         // Init
         initBands();
         loadConfig();
         updateMediaInfo();
         updateSystemInfo();
+        loadRecoveryStatus();
 
         setInterval(updateMediaInfo, 2000);
         setInterval(updateSystemInfo, 10000);  // refresh system info every 10s

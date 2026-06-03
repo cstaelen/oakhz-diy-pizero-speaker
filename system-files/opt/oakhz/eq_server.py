@@ -656,6 +656,51 @@ def media_previous():
 
 DEFAULT_CONFIG = '/opt/camilladsp/config.default.yml'
 
+
+# --- Recovery mode routes ---
+
+def is_recovery_mode_active():
+    try:
+        result = subprocess.run(
+            ['systemctl', 'is-active', 'NetworkManager'],
+            capture_output=True, text=True
+        )
+        return result.stdout.strip() == 'active'
+    except Exception:
+        return False
+
+@app.route('/api/recovery', methods=['GET'])
+def get_recovery_status():
+    return jsonify({'active': is_recovery_mode_active()})
+
+@app.route('/api/recovery/start', methods=['POST'])
+def start_recovery():
+    try:
+        subprocess.run(['sudo', 'systemctl', 'stop', 'hostapd'], check=False)
+        subprocess.run(['sudo', 'systemctl', 'stop', 'dnsmasq'], check=False)
+        subprocess.run(['sudo', 'ip', 'addr', 'flush', 'dev', 'wlan0'], check=False)
+        subprocess.run(['sudo', 'systemctl', 'start', 'NetworkManager'], check=True)
+        logger.info("Recovery mode started")
+        return jsonify({'status': 'ok'})
+    except Exception as e:
+        logger.error(f"Recovery start error: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/recovery/quit', methods=['POST'])
+def quit_recovery():
+    try:
+        subprocess.run(['sudo', 'systemctl', 'stop', 'NetworkManager'], check=False)
+        subprocess.run(['sudo', 'ip', 'addr', 'flush', 'dev', 'wlan0'], check=False)
+        subprocess.run(['sudo', 'ip', 'addr', 'add', '192.168.50.1/24', 'dev', 'wlan0'], check=False)
+        subprocess.run(['sudo', 'ip', 'link', 'set', 'wlan0', 'up'], check=False)
+        subprocess.run(['sudo', 'systemctl', 'start', 'hostapd'], check=True)
+        subprocess.run(['sudo', 'systemctl', 'start', 'dnsmasq'], check=True)
+        logger.info("Recovery mode stopped, AP restarted")
+        return jsonify({'status': 'ok'})
+    except Exception as e:
+        logger.error(f"Recovery quit error: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 @app.route('/api/equalizer/reset-default', methods=['POST'])
 def reset_to_default():
     try:
