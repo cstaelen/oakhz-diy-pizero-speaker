@@ -45,7 +45,7 @@ fi
 if [ -n "$SUDO_USER" ]; then
     SERVICE_USER="$SUDO_USER"
 else
-    SERVICE_USER=$(logname 2>/dev/null || echo "pi")
+    SERVICE_USER=$(logname 2>/dev/null || getent passwd | awk -F: '$3 >= 1000 && $3 < 65534 {print $1; exit}')
 fi
 
 echo -e "${GREEN}Detected user: $SERVICE_USER${NC}"
