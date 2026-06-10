@@ -10,6 +10,7 @@ if [ -f "$RECOVERY_FILE" ]; then
     # Stop AP services
     systemctl stop hostapd 2>/dev/null || true
     systemctl stop dnsmasq 2>/dev/null || true
+    systemctl stop wlan0-ap 2>/dev/null || true
 
     # Flush wlan0 IP
     ip addr flush dev wlan0 2>/dev/null || true
