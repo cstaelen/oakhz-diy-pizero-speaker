@@ -60,53 +60,12 @@ copy_system_file "etc/systemd/system/oakhz-shutdown-sound.service" "/etc/systemd
 # ============================================
 # Create demo WAV files (optional)
 # ============================================
-echo "Creating demo audio files..."
+echo "Installing audio files..."
 
-# Note: These commands require 'sox' to generate sounds
-# If you want to use your own WAVs, place them in $SOUNDS_DIR
-
-if command -v sox &> /dev/null; then
-    # Generate pleasant sounds for each event
-
-    # Ready sound (ascending major chord arpeggio - C major)
-    # Plays when Bluetooth is discoverable and ready
-    sox -n -r 48000 -c 2 $SOUNDS_DIR/ready.wav \
-        synth 0.15 pluck C4 synth 0.15 pluck E4 synth 0.15 pluck G4 synth 0.2 pluck C5 \
-        fade t 0.01 0.6 0.1 norm -9
-
-    # Connect sound (pleasant "ding" - high chime)
-    # Plays when a Bluetooth device connects
-    sox -n -r 48000 -c 2 $SOUNDS_DIR/connect.wav \
-        synth 0.08 sine 1760 fade t 0.01 0.08 0.01 : synth 0.12 sine 2093 fade t 0.01 0.12 0.08 \
-        norm -12
-
-    # Disconnect sound (subtle "bloop" - lower tone)
-    # Plays when a Bluetooth device disconnects
-    sox -n -r 48000 -c 2 $SOUNDS_DIR/disconnect.wav \
-        synth 0.12 sine 587 fade t 0.01 0.12 0.05 : synth 0.08 sine 523 fade t 0.01 0.08 0.05 \
-        norm -12
-
-    # Shutdown sound (descending minor chord - soft goodbye)
-    # Plays before system shutdown
-    sox -n -r 48000 -c 2 $SOUNDS_DIR/shutdown.wav \
-        synth 0.15 pluck G4 synth 0.15 pluck E4 synth 0.15 pluck C4 synth 0.25 pluck G3 \
-        fade t 0.01 0.7 0.2 norm -9
-
-    echo "Demo audio files created successfully"
-else
-    echo "Note: sox not installed, demo sounds not generated"
-    echo "You can place your own WAV files in $SOUNDS_DIR:"
-    echo "  - ready.wav (startup - Bluetooth ready)"
-    echo "  - connect.wav (device connection)"
-    echo "  - disconnect.wav (device disconnection)"
-    echo "  - shutdown.wav (system shutdown)"
-
-    # Create empty files to avoid errors
-    touch $SOUNDS_DIR/ready.wav
-    touch $SOUNDS_DIR/connect.wav
-    touch $SOUNDS_DIR/disconnect.wav
-    touch $SOUNDS_DIR/shutdown.wav
-fi
+copy_system_file "opt/oakhz/sounds/ready.wav"      "$SOUNDS_DIR/ready.wav"
+copy_system_file "opt/oakhz/sounds/connect.wav"    "$SOUNDS_DIR/connect.wav"
+copy_system_file "opt/oakhz/sounds/disconnect.wav" "$SOUNDS_DIR/disconnect.wav"
+copy_system_file "opt/oakhz/sounds/shutdown.wav"   "$SOUNDS_DIR/shutdown.wav"
 
 # Permissions
 chown -R root:root $SOUNDS_DIR
