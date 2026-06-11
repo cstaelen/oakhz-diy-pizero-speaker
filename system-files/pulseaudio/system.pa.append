@@ -2,5 +2,7 @@
 load-module module-bluetooth-policy
 load-module module-bluetooth-discover
 
-### CamillaDSP sink via ALSA loopback
-load-module module-alsa-sink device=hw:Loopback,0,0 sink_name=camilladsp_out format=s32le rate=48000 channels=2 tsched=0
+### CamillaDSP - write to ALSA Loopback playback side
+### (module-udev-detect fails for Loopback because CamillaDSP holds capture side)
+load-module module-alsa-sink device=hw:Loopback,0,0 sink_name=camilladsp_out format=s16le rate=48000 channels=2 tsched=0
+set-default-sink camilladsp_out

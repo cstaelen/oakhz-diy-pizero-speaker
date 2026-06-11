@@ -52,6 +52,7 @@ chmod +x /usr/local/bin/oakhz-rotary.py
 # Systemd service for rotary encoder
 # ============================================
 copy_system_file "etc/systemd/system/oakhz-rotary.service" "/etc/systemd/system/oakhz-rotary.service"
+sed -i "s/{{SERVICE_USER}}/$SERVICE_USER/g" /etc/systemd/system/oakhz-rotary.service
 
 # ============================================
 # Configure GPIO permissions
