@@ -15,15 +15,17 @@ devices:
 
 filters:
 
-  # --- PEAK LIMITER ---
+  # --- HEADROOM ---
+  # -6dB to guarantee bass transients NEVER clip digitally.
+  # Digital clipping = harsh sound. Clean headroom = the "Bose" cleanliness.
+  # Compensate by turning up the physical/Bluetooth volume.
   peak_limiter:
     type: Gain
     parameters:
-      gain: -2
+      gain: -6
       inverted: false
 
   # --- PREAMP ---
-  # Reduced to leave headroom for bass boosts
   preamp_gain:
     type: Gain
     parameters:
@@ -31,50 +33,44 @@ filters:
       inverted: false
 
   # --- DRIVER PROTECTION ---
+  # Raised to 50Hz: frees cone excursion (Xmax 2.5mm) for the 60-120Hz
+  # zone where the music actually lives. Below 50Hz nothing usable exists
+  # (vent tuned at 63Hz).
   hp_protection:
     type: Biquad
     parameters:
       type: Highpass
-      freq: 45
+      freq: 50
       q: 0.7
 
   # --- LINKWITZ TRANSFORM ---
-  # DMA80-4: f0=93.5Hz, q0=0.41
-  # Target: fp=50Hz, qp=0.5 (more punchy than Butterworth 0.707)
-  # qp=0.5 gives tighter, more controlled bass vs 0.707 which is flatter
+  # DMA80-4: freq_act=93.5Hz, q_act=0.41
+  # Target 60Hz: just below the vent tuning (63Hz), extends response
+  # without demanding excursion the driver can't deliver.
   linkwitz_transform:
     type: Biquad
     parameters:
       type: LinkwitzTransform
       freq_act: 93.5
       q_act: 0.41
-      freq_target: 50.0
+      freq_target: 60.0
       q_target: 0.5
 
-  # --- BASS REFLEX ALLPASS ---
-  # Compensates group delay of bass reflex at vent tuning frequency
-  # Makes bass "tighter" and less "boomy" — phase coherence at 58Hz
-  bass_reflex_allpass:
-    type: Biquad
-    parameters:
-      type: Allpass
-      freq: 58
-      q: 0.7
-
   # --- BASS VENT BOOST ---
-  # Precise Peaking at bass reflex tuning frequency (58Hz)
-  # Reduced vs previous — Linkwitz already handles the extension
+  # THE main bass boost — centered on the measured vent frequency (63Hz,
+  # re-measured after rear panel gasket installation).
+  # Single consolidated boost instead of stacking multiple overlapping ones.
   bass_vent_boost:
     type: Biquad
     parameters:
       type: Peaking
-      freq: 58
-      q: 0.5
-      gain: 2
+      freq: 63
+      q: 0.6
+      gain: 4
 
   # --- HP RESONANCE NOTCH ---
-  # Cuts the natural resonance of DMA80-4 at Fs=93.5Hz
-  # Reduces coloration and "one-note bass" effect in the mid-bass
+  # Cuts the DMA80-4 natural resonance (Fs=93.5Hz).
+  # Kills the "one-note bass" coloration — key for clean, defined bass.
   hp_resonance_notch:
     type: Biquad
     parameters:
@@ -84,6 +80,7 @@ filters:
       gain: -3
 
   # --- LOUDNESS BASS MID ---
+  # Reduced to +2: bass_vent_boost now does the heavy lifting.
   loudness_bass_mid:
     type: Biquad
     parameters:
@@ -125,7 +122,7 @@ filters:
       type: Peaking
       freq: 3000
       q: 1.5
-      gain: 2
+      gain: 3
 
   # --- HARMONIC EXCITER ---
   harmonic_exciter:
@@ -134,7 +131,7 @@ filters:
       type: Highshelf
       freq: 6000
       slope: 6
-      gain: 3
+      gain: 1
 
   # --- LOUDNESS TREBLE ---
   loudness_treble:
@@ -143,35 +140,29 @@ filters:
       type: Highshelf
       freq: 8000
       slope: 6
-      gain: 4
-
-  # --- SPATIAL CROSSOVER ---
-  # Left: warm, bass-forward
-  spatial_left_bass:
-    type: Biquad
-    parameters:
-      type: Lowshelf
-      freq: 200
-      slope: 6
       gain: 2
 
-  # Right: airy, treble-forward
-  spatial_right_treble:
+  # --- WIDENING HIGHPASS ---
+  # Crucial fix: the stereo widening cross-feed is now filtered above 400Hz.
+  # Bass content (mostly mono) is NO LONGER phase-cancelled by the widener.
+  # This restores full, round, mono-coherent bass — the Bose/JBL way.
+  widen_highpass:
     type: Biquad
     parameters:
-      type: Highshelf
-      freq: 3000
-      slope: 6
-      gain: 2
+      type: Highpass
+      freq: 400
+      q: 0.7
 
   # --- 10-BAND PARAMETRIC EQ ---
+  # eq_31 set to 0: nothing usable below 50Hz on this system,
+  # boosting it only wasted headroom and excursion.
   eq_31:
     type: Biquad
     parameters:
       type: Peaking
       freq: 31
       q: 1.0
-      gain: 4
+      gain: 0
 
   eq_63:
     type: Biquad
@@ -179,7 +170,7 @@ filters:
       type: Peaking
       freq: 63
       q: 1.0
-      gain: 4
+      gain: 3
 
   eq_125:
     type: Biquad
@@ -187,7 +178,7 @@ filters:
       type: Peaking
       freq: 125
       q: 1.0
-      gain: 4
+      gain: 2
 
   eq_250:
     type: Biquad
@@ -227,7 +218,7 @@ filters:
       type: Peaking
       freq: 4000
       q: 1.0
-      gain: 4.0
+      gain: 5.0
 
   eq_8k:
     type: Biquad
@@ -235,7 +226,7 @@ filters:
       type: Peaking
       freq: 8000
       q: 1.0
-      gain: 7.0
+      gain: 4.0
 
   eq_16k:
     type: Biquad
@@ -243,13 +234,45 @@ filters:
       type: Peaking
       freq: 16000
       q: 1.0
-      gain: 6.0
+      gain: 3.0
 
 mixers:
-  # --- STEREO WIDENING ---
-  stereo_wide:
+  # --- SPLIT 2 → 4 ---
+  # Channels 0/1: main L/R signal (full band)
+  # Channels 2/3: copies of L/R that will be highpass-filtered,
+  # then cross-fed inverted for widening (treble only)
+  split_for_widening:
     channels:
       in: 2
+      out: 4
+    mapping:
+      - dest: 0
+        sources:
+          - channel: 0
+            gain: 0
+            inverted: false
+      - dest: 1
+        sources:
+          - channel: 1
+            gain: 0
+            inverted: false
+      - dest: 2
+        sources:
+          - channel: 0
+            gain: 0
+            inverted: false
+      - dest: 3
+        sources:
+          - channel: 1
+            gain: 0
+            inverted: false
+
+  # --- COMBINE 4 → 2 ---
+  # Widening applied ONLY on the filtered (>400Hz) copies.
+  # Bass stays mono-coherent and full.
+  widen_and_combine:
+    channels:
+      in: 4
       out: 2
     mapping:
       - dest: 0
@@ -257,7 +280,7 @@ mixers:
           - channel: 0
             gain: 0
             inverted: false
-          - channel: 1
+          - channel: 3
             gain: -9
             inverted: true
       - dest: 1
@@ -265,50 +288,19 @@ mixers:
           - channel: 1
             gain: 0
             inverted: false
-          - channel: 0
+          - channel: 2
             gain: -9
             inverted: true
 
 pipeline:
-  # LEFT channel — warm, bass-forward
+  # Main EQ chain — identical for both channels
   - type: Filter
     channel: 0
     names:
       - peak_limiter
       - hp_protection
       - preamp_gain
-      - linkwitz_transform      # Bass redesign: 93.5Hz → 50Hz punchy
-      - bass_reflex_allpass     # Phase coherence at 58Hz
-      - bass_vent_boost         # Vent boost at 58Hz
-      - hp_resonance_notch      # Cut HP resonance at 93.5Hz
-      - loudness_bass_mid
-      - room_correction
-      - mid_cut_low
-      - mid_cut_high
-      - presence
-      - harmonic_exciter
-      - loudness_treble
-      - spatial_left_bass       # Spatial: warm left
-      - eq_31
-      - eq_63
-      - eq_125
-      - eq_250
-      - eq_500
-      - eq_1k
-      - eq_2k
-      - eq_4k
-      - eq_8k
-      - eq_16k
-
-  # RIGHT channel — airy, treble-forward
-  - type: Filter
-    channel: 1
-    names:
-      - peak_limiter
-      - hp_protection
-      - preamp_gain
       - linkwitz_transform
-      - bass_reflex_allpass
       - bass_vent_boost
       - hp_resonance_notch
       - loudness_bass_mid
@@ -318,7 +310,6 @@ pipeline:
       - presence
       - harmonic_exciter
       - loudness_treble
-      - spatial_right_treble    # Spatial: airy right
       - eq_31
       - eq_63
       - eq_125
@@ -330,5 +321,48 @@ pipeline:
       - eq_8k
       - eq_16k
 
+  - type: Filter
+    channel: 1
+    names:
+      - peak_limiter
+      - hp_protection
+      - preamp_gain
+      - linkwitz_transform
+      - bass_vent_boost
+      - hp_resonance_notch
+      - loudness_bass_mid
+      - room_correction
+      - mid_cut_low
+      - mid_cut_high
+      - presence
+      - harmonic_exciter
+      - loudness_treble
+      - eq_31
+      - eq_63
+      - eq_125
+      - eq_250
+      - eq_500
+      - eq_1k
+      - eq_2k
+      - eq_4k
+      - eq_8k
+      - eq_16k
+
+  # Split into 4 channels for band-limited widening
   - type: Mixer
-    name: stereo_wide
+    name: split_for_widening
+
+  # Highpass the widening copies — bass never reaches the cross-feed
+  - type: Filter
+    channel: 2
+    names:
+      - widen_highpass
+
+  - type: Filter
+    channel: 3
+    names:
+      - widen_highpass
+
+  # Recombine: full-band main + treble-only inverted cross-feed
+  - type: Mixer
+    name: widen_and_combine
