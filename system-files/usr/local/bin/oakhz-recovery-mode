@@ -1,21 +1,15 @@
 #!/bin/bash
 # OaKhz Recovery Mode
 # Check if WiFi client mode should be enabled instead of AP mode
+# AP services (wlan0-ap, hostapd, dnsmasq) have ConditionPathNotExists=/boot/firmware/enable-wifi-client
+# so they will not start if this file exists — no need to stop them here.
 
 RECOVERY_FILE="/boot/firmware/enable-wifi-client"
 
 if [ -f "$RECOVERY_FILE" ]; then
     echo "Recovery mode detected: enabling WiFi client mode"
 
-    # Stop AP services
-    systemctl stop hostapd 2>/dev/null || true
-    systemctl stop dnsmasq 2>/dev/null || true
-    systemctl stop wlan0-ap 2>/dev/null || true
-
-    # Flush wlan0 IP
-    ip addr flush dev wlan0 2>/dev/null || true
-
-    # Start NetworkManager
+    # Start NetworkManager to connect to saved WiFi networks
     systemctl start NetworkManager
 
     echo "WiFi client mode enabled. NetworkManager will connect to saved networks."

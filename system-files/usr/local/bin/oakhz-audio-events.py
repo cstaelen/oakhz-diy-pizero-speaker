@@ -55,7 +55,7 @@ def play_ready_sound():
 
     # Force sink to 100% before playing
     subprocess.run(
-        ['pactl', 'set-sink-volume', 'camilladsp_out', '100%'],
+        ['pactl', 'set-sink-volume', '@DEFAULT_SINK@', '100%'],
         env=env
     )
     # Wait for audio system to be fully ready

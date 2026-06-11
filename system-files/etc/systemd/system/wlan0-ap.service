@@ -2,6 +2,7 @@
 Description=Configure wlan0 for Access Point mode
 Before=hostapd.service dnsmasq.service
 DefaultDependencies=no
+ConditionPathNotExists=/boot/firmware/enable-wifi-client
 
 [Service]
 Type=oneshot

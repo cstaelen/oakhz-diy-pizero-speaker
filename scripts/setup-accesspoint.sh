@@ -79,12 +79,7 @@ echo "  • Captive Portal: Enabled"
 echo "  • Recovery Mode: File-based (/boot/firmware/enable-wifi-client)"
 echo ""
 
-read -p "Continue with installation? (y/n) " -n 1 -r
-echo
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    log_warning "Installation cancelled"
-    exit 0
-fi
+log_info "Starting installation..."
 
 ################################################################################
 # 1. Check WiFi interface
@@ -158,6 +153,11 @@ log_success "dnsmasq configured"
 log_info "Creating wlan0-ap service for static IP..."
 
 copy_system_file "etc/systemd/system/wlan0-ap.service" "/etc/systemd/system/wlan0-ap.service"
+
+# Drop-in overrides for hostapd and dnsmasq to skip AP mode in recovery
+mkdir -p /etc/systemd/system/hostapd.service.d /etc/systemd/system/dnsmasq.service.d
+copy_system_file "etc/systemd/system/hostapd.service.d/recovery.conf" "/etc/systemd/system/hostapd.service.d/recovery.conf"
+copy_system_file "etc/systemd/system/dnsmasq.service.d/recovery.conf" "/etc/systemd/system/dnsmasq.service.d/recovery.conf"
 
 log_success "wlan0-ap service created"
 
@@ -263,12 +263,6 @@ echo ""
 echo "═══════════════════════════════════════════════════════════════"
 echo ""
 
-read -p "Reboot now? (y/n) " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    log_info "Rebooting in 3 seconds..."
-    sleep 3
-    reboot
-else
-    log_warning "Please reboot manually: sudo reboot"
+log_warning "Please reboot manually to activate the Access Point: sudo reboot"
+if false; then
 fi

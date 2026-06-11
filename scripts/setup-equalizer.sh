@@ -108,6 +108,7 @@ copy_system_file "opt/oakhz/templates/index.html" "$INSTALL_DIR/templates/index.
 
 # Service systemd pour l'equalizer
 copy_system_file "etc/systemd/system/oakhz-equalizer.service" "/etc/systemd/system/oakhz-equalizer.service"
+sed -i "s/{{SERVICE_USER}}/$SERVICE_USER/g" /etc/systemd/system/oakhz-equalizer.service
 
 copy_system_file "/opt/camilladsp/config.yml" "/opt/camilladsp/config.default.yml"
 
@@ -119,7 +120,8 @@ echo -e "${GREEN}✓ Web interface installed${NC}"
 echo -e "${YELLOW}[3/4] Configuring Python to bind port 80...${NC}"
 
 # Allow Python to bind to port 80 (privileged port)
-setcap 'cap_net_bind_service=+ep' /usr/bin/python3 || setcap 'cap_net_bind_service=+ep' $(which python3)
+# setcap requires the real binary path, not a symlink
+setcap 'cap_net_bind_service=+ep' "$(readlink -f $(which python3))"
 
 echo -e "${GREEN}✓ Python configured for port 80${NC}"
 

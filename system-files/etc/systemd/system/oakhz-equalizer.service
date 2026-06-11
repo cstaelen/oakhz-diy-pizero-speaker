@@ -4,7 +4,7 @@ After=network.target pulseaudio.service
 
 [Service]
 Type=simple
-User=$SERVICE_USER
+User={{SERVICE_USER}}
 WorkingDirectory=/opt/oakhz
 ExecStart=/usr/bin/python3 /opt/oakhz/eq_server.py
 Restart=always
