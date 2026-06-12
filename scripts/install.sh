@@ -144,6 +144,9 @@ copy_system_file "etc/systemd/system/ssh.service" "/etc/systemd/system/ssh.servi
 # Add pulse to bluetooth group
 usermod -a -G bluetooth pulse
 
+# Add service user to pulse-access group (required for pactl in system mode)
+usermod -a -G pulse-access $SERVICE_USER
+
 # PulseAudio system configuration for CamillaDSP and Bluetooth
 sed -i 's/load-module module-udev-detect$/load-module module-udev-detect ignore_dB=1 tsched=0/' /etc/pulse/system.pa
 
