@@ -540,6 +540,14 @@
                 </button>
                 <button class="media-btn" onclick="mediaNext()" title="Next">⏭</button>
             </div>
+            <div class="preamp-control" style="margin-top: 20px;">
+                <div class="preamp-header">
+                    <label style="display:flex; align-items:center; gap:8px;">🔊 <span>Volume</span></label>
+                    <span class="preamp-value" id="volumeValue">—</span>
+                </div>
+                <input type="range" class="slider" id="volumeSlider" min="0" max="100" value="75"
+                    oninput="updateVolume(this.value)">
+            </div>
         </div>
 
         <!-- System Info Card -->
@@ -750,6 +758,30 @@
                 .catch(() => { });
         }
 
+        // --- Volume ---
+        function updateVolume(value) {
+            document.getElementById('volumeValue').textContent = `${value}%`;
+            if (debounceTimers.volume) clearTimeout(debounceTimers.volume);
+            debounceTimers.volume = setTimeout(() => {
+                fetch('/api/volume', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ volume: parseInt(value) })
+                }).catch(() => {});
+            }, 150);
+        }
+
+        function loadVolume() {
+            fetch('/api/volume')
+                .then(r => r.json())
+                .then(data => {
+                    const v = data.volume ?? 75;
+                    document.getElementById('volumeSlider').value = v;
+                    document.getElementById('volumeValue').textContent = `${v}%`;
+                })
+                .catch(() => {});
+        }
+
         // --- EQ ---
         function initBands() {
             const container = document.getElementById('bands');
@@ -915,12 +947,14 @@
         // Init
         initBands();
         loadConfig();
+        loadVolume();
         updateMediaInfo();
         updateSystemInfo();
         loadRecoveryStatus();
 
         setInterval(updateMediaInfo, 2000);
-        setInterval(updateSystemInfo, 10000);  // refresh system info every 10s
+        setInterval(loadVolume, 3000);  // sync volume with rotary encoder changes
+        setInterval(updateSystemInfo, 10000);
     </script>
 </body>
 

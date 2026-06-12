@@ -400,6 +400,53 @@ def get_connected_bluetooth_device():
         return None
 
 
+def get_pulse_volume():
+    """Get current PulseAudio sink volume (0-100)"""
+    try:
+        import re
+        env = os.environ.copy()
+        env['PULSE_SERVER'] = 'unix:/run/pulse/native'
+        result = subprocess.run(
+            ['pactl', 'get-sink-volume', '@DEFAULT_SINK@'],
+            capture_output=True, text=True, timeout=2, env=env
+        )
+        if result.returncode == 0:
+            match = re.search(r'(\d+)%', result.stdout)
+            if match:
+                return int(match.group(1))
+    except Exception:
+        pass
+    return 75
+
+
+def set_pulse_volume(percent):
+    """Set PulseAudio sink volume (0-100)"""
+    try:
+        env = os.environ.copy()
+        env['PULSE_SERVER'] = 'unix:/run/pulse/native'
+        subprocess.run(
+            ['pactl', 'set-sink-volume', '@DEFAULT_SINK@', f'{percent}%'],
+            timeout=2, env=env
+        )
+        return True
+    except Exception:
+        return False
+
+
+# --- Volume routes ---
+
+@app.route('/api/volume', methods=['GET'])
+def get_volume():
+    return jsonify({'volume': get_pulse_volume()})
+
+@app.route('/api/volume', methods=['POST'])
+def set_volume():
+    data = request.json
+    volume = max(0, min(100, int(data.get('volume', 75))))
+    success = set_pulse_volume(volume)
+    return jsonify({'status': 'ok' if success else 'error', 'volume': volume})
+
+
 # --- EQ routes ---
 
 @app.route('/api/equalizer', methods=['GET'])
