@@ -1,0 +1,1 @@
+SUBSYSTEM=="sound", ATTR{id}=="Loopback", ENV{PULSE_IGNORE}="1"

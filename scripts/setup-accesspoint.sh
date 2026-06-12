@@ -154,9 +154,12 @@ log_info "Creating wlan0-ap service for static IP..."
 
 copy_system_file "etc/systemd/system/wlan0-ap.service" "/etc/systemd/system/wlan0-ap.service"
 
-# Drop-in overrides for hostapd and dnsmasq to skip AP mode in recovery
-mkdir -p /etc/systemd/system/hostapd.service.d /etc/systemd/system/dnsmasq.service.d
-copy_system_file "etc/systemd/system/hostapd.service.d/recovery.conf" "/etc/systemd/system/hostapd.service.d/recovery.conf"
+# Service overrides: remove network.target deps, add ConditionPathNotExists for recovery
+copy_system_file "etc/systemd/system/hostapd.service" "/etc/systemd/system/hostapd.service"
+copy_system_file "etc/systemd/system/dnsmasq.service" "/etc/systemd/system/dnsmasq.service"
+
+# Drop-in for dnsmasq recovery mode (ConditionPathNotExists)
+mkdir -p /etc/systemd/system/dnsmasq.service.d
 copy_system_file "etc/systemd/system/dnsmasq.service.d/recovery.conf" "/etc/systemd/system/dnsmasq.service.d/recovery.conf"
 
 log_success "wlan0-ap service created"
@@ -188,6 +191,9 @@ log_info "Disabling NetworkManager (will only start in recovery mode)..."
 
 systemctl disable NetworkManager 2>/dev/null || true
 systemctl stop NetworkManager 2>/dev/null || true
+
+# Disable wpa_supplicant in AP mode (NetworkManager handles it in recovery mode)
+systemctl mask wpa_supplicant.service 2>/dev/null || true
 
 log_success "NetworkManager disabled"
 

@@ -1,5 +1,6 @@
 [Unit]
 Description=OaKhz Rotary Encoder Controller
+After=pulseaudio.service bluetooth.service
 Wants=pulseaudio.service bluetooth.service
 DefaultDependencies=no
 

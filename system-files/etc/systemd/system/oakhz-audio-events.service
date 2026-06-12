@@ -1,5 +1,6 @@
 [Unit]
 Description=OaKhz Audio Events Manager
+After=pulseaudio.service bluetooth.service
 Wants=pulseaudio.service bluetooth.service
 DefaultDependencies=no
 
@@ -11,8 +12,8 @@ ExecStartPre=/bin/sh -c 'until pactl info >/dev/null 2>&1; do sleep 0.2; done'
 ExecStart=/usr/bin/python3 /usr/local/bin/oakhz-audio-events.py
 Restart=always
 RestartSec=5
-Environment="XDG_RUNTIME_DIR=/run/user/1000"
-Environment="PULSE_RUNTIME_PATH=/run/user/1000/pulse"
+Environment="PULSE_SERVER=unix:/run/pulse/native"
+Environment="HOME=/home/oakhz"
 
 [Install]
 WantedBy=multi-user.target

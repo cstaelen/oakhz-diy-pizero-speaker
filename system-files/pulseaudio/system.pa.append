@@ -2,6 +2,7 @@
 load-module module-bluetooth-policy
 load-module module-bluetooth-discover
 
-### CamillaDSP - set ALSA Loopback as default sink
-### module-udev-detect auto-detects the Loopback card as alsa_output.platform-snd_aloop.0.analog-stereo
-set-default-sink alsa_output.platform-snd_aloop.0.analog-stereo
+### CamillaDSP - explicit ALSA Loopback sink
+### udev-detect ignores Loopback via /etc/udev/rules.d/89-pulseaudio-loopback.rules
+load-module module-alsa-sink device=hw:Loopback,0,0 sink_name=camilladsp_out format=s16le rate=48000 channels=2 tsched=0
+set-default-sink camilladsp_out

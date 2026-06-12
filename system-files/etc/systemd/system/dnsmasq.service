@@ -1,0 +1,17 @@
+[Unit]
+Description=dnsmasq - A lightweight DHCP and caching DNS server
+Documentation=man:dnsmasq(8)
+After=wlan0-ap.service
+DefaultDependencies=no
+
+[Service]
+Type=forking
+PIDFile=/run/dnsmasq/dnsmasq.pid
+ExecStartPre=/usr/share/dnsmasq/systemd-helper checkconfig
+ExecStart=/usr/share/dnsmasq/systemd-helper exec
+ExecStartPost=/usr/share/dnsmasq/systemd-helper start-resolvconf
+ExecStop=/usr/share/dnsmasq/systemd-helper stop-resolvconf
+ExecReload=/bin/kill -HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target

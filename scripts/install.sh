@@ -135,6 +135,12 @@ copy_system_file "etc/systemd/system/pulseaudio.service" "/etc/systemd/system/pu
 # Disable HDMI audio/GPU to prevent MESA/Vulkan timeout during PulseAudio init
 copy_system_file "etc/modprobe.d/oakhz-nohdmi.conf" "/etc/modprobe.d/oakhz-nohdmi.conf"
 
+# Ignore ALSA Loopback in udev-detect to avoid conflict with explicit module-alsa-sink
+copy_system_file "etc/udev/rules.d/89-pulseaudio-loopback.rules" "/etc/udev/rules.d/89-pulseaudio-loopback.rules"
+
+# SSH override: remove network.target dependency for faster boot
+copy_system_file "etc/systemd/system/ssh.service" "/etc/systemd/system/ssh.service"
+
 # Add pulse to bluetooth group
 usermod -a -G bluetooth pulse
 
@@ -201,6 +207,12 @@ echo "Device display name is now : OaKhz audio"
 echo ""
 echo "Verification :"
 hostnamectl status | grep "Pretty hostname"
+
+# Boot time optimizations: disable unused services
+systemctl mask cloud-init.target cloud-init-local.service cloud-init.service \
+    cloud-init-network.service cloud-final.service cloud-config.service 2>/dev/null || true
+systemctl disable e2scrub_reap.service 2>/dev/null || true
+systemctl disable serial-getty@ttyS0.service 2>/dev/null || true
 
 # Enable and start services
 systemctl daemon-reload

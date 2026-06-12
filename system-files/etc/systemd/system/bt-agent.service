@@ -2,11 +2,11 @@
 Description=Bluetooth NoInputNoOutput Agent
 After=bluetooth.service
 Wants=bluetooth.service
+DefaultDependencies=no
 
 [Service]
 Type=simple
-ExecStartPre=/usr/bin/bluetoothctl discoverable on
-ExecStartPre=/usr/bin/bluetoothctl pairable on
+ExecStartPre=/bin/sh -c 'busctl call org.bluez /org/bluez/hci0 org.freedesktop.DBus.Properties Set ssv org.bluez.Adapter1 Discoverable b true 2>/dev/null; busctl call org.bluez /org/bluez/hci0 org.freedesktop.DBus.Properties Set ssv org.bluez.Adapter1 Pairable b true 2>/dev/null'
 ExecStart=/usr/bin/bt-agent -c NoInputNoOutput
 Restart=on-failure
 RestartSec=5
