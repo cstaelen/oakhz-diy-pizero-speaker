@@ -29,7 +29,7 @@ filters:
   preamp_gain:
     type: Gain
     parameters:
-      gain: 1
+      gain: 2
       inverted: false
 
   # --- DRIVER PROTECTION ---
@@ -113,7 +113,7 @@ filters:
       type: Peaking
       freq: 600
       q: 1.0
-      gain: -2
+      gain: -1
 
   # --- PRESENCE ---
   presence:
@@ -170,7 +170,7 @@ filters:
       type: Peaking
       freq: 63
       q: 1.0
-      gain: 3
+      gain: 0
 
   eq_125:
     type: Biquad
@@ -218,7 +218,7 @@ filters:
       type: Peaking
       freq: 4000
       q: 1.0
-      gain: 5.0
+      gain: 2.0
 
   eq_8k:
     type: Biquad
