@@ -237,63 +237,38 @@ filters:
       gain: 3.0
 
 mixers:
-  # --- SPLIT 2 → 4 ---
-  # Channels 0/1: main L/R signal (full band)
-  # Channels 2/3: copies of L/R that will be highpass-filtered,
-  # then cross-fed inverted for widening (treble only)
-  split_for_widening:
+  # --- MONO SUM ---
+  # Sum L+R at -6dB each → mono at same level as original stereo.
+  # Both drivers reproduce the full signal → +3dB effective SPL,
+  # better bass from double cone surface, no phase issues.
+  mono_sum:
     channels:
       in: 2
-      out: 4
-    mapping:
-      - dest: 0
-        sources:
-          - channel: 0
-            gain: 0
-            inverted: false
-      - dest: 1
-        sources:
-          - channel: 1
-            gain: 0
-            inverted: false
-      - dest: 2
-        sources:
-          - channel: 0
-            gain: 0
-            inverted: false
-      - dest: 3
-        sources:
-          - channel: 1
-            gain: 0
-            inverted: false
-
-  # --- COMBINE 4 → 2 ---
-  # Widening applied ONLY on the filtered (>400Hz) copies.
-  # Bass stays mono-coherent and full.
-  widen_and_combine:
-    channels:
-      in: 4
       out: 2
     mapping:
       - dest: 0
         sources:
           - channel: 0
-            gain: 0
+            gain: -6
             inverted: false
-          - channel: 3
-            gain: -9
-            inverted: true
+          - channel: 1
+            gain: -6
+            inverted: false
       - dest: 1
         sources:
-          - channel: 1
-            gain: 0
+          - channel: 0
+            gain: -6
             inverted: false
-          - channel: 2
-            gain: -9
-            inverted: true
+          - channel: 1
+            gain: -6
+            inverted: false
 
 pipeline:
-  # Main EQ chain — identical for both channels
+  # Sum L+R to mono first
+  - type: Mixer
+    name: mono_sum
+
+  # EQ chain — same signal on both channels
   - type: Filter
     channel: 0
     names:
@@ -347,22 +322,3 @@ pipeline:
       - eq_4k
       - eq_8k
       - eq_16k
-
-  # Split into 4 channels for band-limited widening
-  - type: Mixer
-    name: split_for_widening
-
-  # Highpass the widening copies — bass never reaches the cross-feed
-  - type: Filter
-    channel: 2
-    names:
-      - widen_highpass
-
-  - type: Filter
-    channel: 3
-    names:
-      - widen_highpass
-
-  # Recombine: full-band main + treble-only inverted cross-feed
-  - type: Mixer
-    name: widen_and_combine
