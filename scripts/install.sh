@@ -182,7 +182,7 @@ copy_system_file "etc/systemd/system/bt-agent.service" "/etc/systemd/system/bt-a
 echo -e "${YELLOW}[8/8] Sudo permissions and services activation...${NC}"
 
 # Allow user to reload CamillaDSP without password
-copy_system_file "etc/sudoers.d/oakhz-camilladsp" "/etc/sudoers.d/oakhz-camilladsp"
+sed "s/\$SERVICE_USER/$SERVICE_USER/" "$SYSTEM_FILES/etc/sudoers.d/oakhz-camilladsp" > /etc/sudoers.d/oakhz-camilladsp
 chmod 440 /etc/sudoers.d/oakhz-camilladsp
 
 # Give permissions to write on CamillaDSP config
