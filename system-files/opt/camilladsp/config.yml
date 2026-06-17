@@ -38,6 +38,7 @@ filters:
       q: 0.7
 
   # --- LINKWITZ TRANSFORM ---
+  # DMA80-4: freq_act=93.5Hz, q_act=0.41 → target 60Hz/Q=0.5
   linkwitz_transform:
     type: Biquad
     parameters:
@@ -48,6 +49,7 @@ filters:
       q_target: 0.5
 
   # --- BASS VENT BOOST ---
+  # Narrow boost at port frequency (59Hz), Q=1.5 to avoid spilling into excursion zone
   bass_vent_boost:
     type: Biquad
     parameters:
@@ -56,21 +58,34 @@ filters:
       q: 1.5
       gain: 2
 
+  # --- OPTION A: ALLPASS PHASE CORRECTION ---
+  # Corrects group delay at bass reflex port frequency.
+  # Tightens bass transients without adding gain — bass sounds more defined.
+  bass_allpass:
+    type: Biquad
+    parameters:
+      type: Allpass
+      freq: 63
+      q: 0.7
+
   # --- HP RESONANCE NOTCH ---
+  # Option B: reduced to -2dB (was -3dB) to restore some natural driver punch
   hp_resonance_notch:
     type: Biquad
     parameters:
       type: Peaking
       freq: 93.5
       q: 2.0
-      gain: -3
+      gain: -2
 
-  # --- LOUDNESS BASS MID ---
+  # --- OPTION B: PUNCH ZONE BOOST ---
+  # Moved from 100Hz to 80Hz: the zone where port + cone work together.
+  # More punch, less excursion risk than boosting at 59-63Hz.
   loudness_bass_mid:
     type: Biquad
     parameters:
       type: Peaking
-      freq: 100
+      freq: 80
       q: 1.2
       gain: 4
 
@@ -208,7 +223,36 @@ filters:
       q: 1.0
       gain: 3.0
 
-  # --- OUTPUT LIMITER ---
+  # --- OPTION C: MULTIBAND CROSSOVER ---
+  # Linkwitz-Riley 4th order at 200Hz: flat summing response when recombined.
+  # Bass band processed separately with its own limiter.
+  crossover_low:
+    type: BiquadCombo
+    parameters:
+      type: LinkwitzRileyLowpass
+      freq: 200
+      order: 4
+
+  crossover_high:
+    type: BiquadCombo
+    parameters:
+      type: LinkwitzRileyHighpass
+      freq: 200
+      order: 4
+
+  # --- OPTION D: BASS HARMONIC EXCITER ---
+  # Soft clipper on bass band only (post crossover_low).
+  # Generates 2nd/3rd harmonics (120Hz, 180Hz...) from bass fundamentals.
+  # The ear reconstructs the perceived low-frequency fundamental from these harmonics.
+  # clip_limit=-6dB: moderate saturation, musical not harsh.
+  bass_harmonic:
+    type: Limiter
+    parameters:
+      clip_limit: -6.0
+      soft_clip: true
+
+  # --- OUTPUT SAFETY LIMITER ---
+  # Final peak catcher after multiband recombine.
   output_limiter:
     type: Limiter
     parameters:
@@ -239,10 +283,65 @@ mixers:
             gain: -6
             inverted: false
 
+  # --- SPLIT FOR MULTIBAND (2→4) ---
+  # Duplicate each channel: ch0/ch1 from L, ch2/ch3 from R
+  split_multiband:
+    channels:
+      in: 2
+      out: 4
+    mapping:
+      - dest: 0
+        sources:
+          - channel: 0
+            gain: 0
+            inverted: false
+      - dest: 1
+        sources:
+          - channel: 0
+            gain: 0
+            inverted: false
+      - dest: 2
+        sources:
+          - channel: 1
+            gain: 0
+            inverted: false
+      - dest: 3
+        sources:
+          - channel: 1
+            gain: 0
+            inverted: false
+
+  # --- COMBINE MULTIBAND (4→2) ---
+  # Sum bass (ch0) + high (ch1) → L output
+  # Sum bass (ch2) + high (ch3) → R output
+  combine_multiband:
+    channels:
+      in: 4
+      out: 2
+    mapping:
+      - dest: 0
+        sources:
+          - channel: 0
+            gain: 0
+            inverted: false
+          - channel: 1
+            gain: 0
+            inverted: false
+      - dest: 1
+        sources:
+          - channel: 2
+            gain: 0
+            inverted: false
+          - channel: 3
+            gain: 0
+            inverted: false
+
 pipeline:
+  # Sum L+R to mono
   - type: Mixer
     name: mono_sum
 
+  # Main EQ chain — channel 0
   - type: Filter
     channel: 0
     names:
@@ -251,6 +350,7 @@ pipeline:
       - preamp_gain
       - linkwitz_transform
       - bass_vent_boost
+      - bass_allpass
       - hp_resonance_notch
       - loudness_bass_mid
       - room_correction
@@ -269,8 +369,8 @@ pipeline:
       - eq_4k
       - eq_8k
       - eq_16k
-      - output_limiter
 
+  # Main EQ chain — channel 1
   - type: Filter
     channel: 1
     names:
@@ -279,6 +379,7 @@ pipeline:
       - preamp_gain
       - linkwitz_transform
       - bass_vent_boost
+      - bass_allpass
       - hp_resonance_notch
       - loudness_bass_mid
       - room_correction
@@ -297,4 +398,48 @@ pipeline:
       - eq_4k
       - eq_8k
       - eq_16k
+
+  # Split to 4ch for multiband processing
+  - type: Mixer
+    name: split_multiband
+
+  # ch0: bass L — crossover lowpass + harmonic exciter (Options C+D)
+  - type: Filter
+    channel: 0
+    names:
+      - crossover_low
+      - bass_harmonic
+
+  # ch1: high L — crossover highpass (Option C)
+  - type: Filter
+    channel: 1
+    names:
+      - crossover_high
+
+  # ch2: bass R — crossover lowpass + harmonic exciter (Options C+D)
+  - type: Filter
+    channel: 2
+    names:
+      - crossover_low
+      - bass_harmonic
+
+  # ch3: high R — crossover highpass (Option C)
+  - type: Filter
+    channel: 3
+    names:
+      - crossover_high
+
+  # Recombine bass + high → 2ch output
+  - type: Mixer
+    name: combine_multiband
+
+  # Final safety limiter
+  - type: Filter
+    channel: 0
+    names:
+      - output_limiter
+
+  - type: Filter
+    channel: 1
+    names:
       - output_limiter
