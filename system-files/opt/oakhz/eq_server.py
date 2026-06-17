@@ -753,8 +753,9 @@ def reset_to_default():
     try:
         if os.path.exists(CONFIG_FILE):
             os.remove(CONFIG_FILE)
-        # Restore from default
-        subprocess.run(['sudo', 'cp', DEFAULT_CONFIG, CAMILLADSP_CONFIG], check=True)
+        # Restore from default (oakhz owns config.yml, no sudo needed)
+        import shutil
+        shutil.copy(DEFAULT_CONFIG, CAMILLADSP_CONFIG)
         subprocess.run(['sudo', 'pkill', '-HUP', 'camilladsp'], check=False)
         # Reload eq state from restored config
         eq.config = {

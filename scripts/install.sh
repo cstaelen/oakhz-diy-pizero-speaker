@@ -219,6 +219,9 @@ systemctl disable serial-getty@ttyS0.service 2>/dev/null || true
 systemctl disable avahi-daemon.service avahi-daemon.socket 2>/dev/null || true
 systemctl disable triggerhappy.service triggerhappy.socket 2>/dev/null || true
 systemctl disable ModemManager.service 2>/dev/null || true
+systemctl disable keyboard-setup.service 2>/dev/null || true
+systemctl mask rpi-resize-swap-file.service 2>/dev/null || true
+systemctl disable systemd-timesyncd.service 2>/dev/null || true
 
 # Enable and start services
 systemctl daemon-reload

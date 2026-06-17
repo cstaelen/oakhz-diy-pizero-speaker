@@ -16,26 +16,20 @@ devices:
 filters:
 
   # --- HEADROOM ---
-  # -6dB to guarantee bass transients NEVER clip digitally.
-  # Digital clipping = harsh sound. Clean headroom = the "Bose" cleanliness.
-  # Compensate by turning up the physical/Bluetooth volume.
   peak_limiter:
     type: Gain
     parameters:
-      gain: -6
+      gain: -4
       inverted: false
 
   # --- PREAMP ---
   preamp_gain:
     type: Gain
     parameters:
-      gain: 2
+      gain: 1
       inverted: false
 
   # --- DRIVER PROTECTION ---
-  # Raised to 50Hz: frees cone excursion (Xmax 2.5mm) for the 60-120Hz
-  # zone where the music actually lives. Below 50Hz nothing usable exists
-  # (vent tuned at 63Hz).
   hp_protection:
     type: Biquad
     parameters:
@@ -44,9 +38,6 @@ filters:
       q: 0.7
 
   # --- LINKWITZ TRANSFORM ---
-  # DMA80-4: freq_act=93.5Hz, q_act=0.41
-  # Target 60Hz: just below the vent tuning (63Hz), extends response
-  # without demanding excursion the driver can't deliver.
   linkwitz_transform:
     type: Biquad
     parameters:
@@ -57,20 +48,15 @@ filters:
       q_target: 0.5
 
   # --- BASS VENT BOOST ---
-  # THE main bass boost — centered on the measured vent frequency (63Hz,
-  # re-measured after rear panel gasket installation).
-  # Single consolidated boost instead of stacking multiple overlapping ones.
   bass_vent_boost:
     type: Biquad
     parameters:
       type: Peaking
-      freq: 63
-      q: 0.6
-      gain: 4
+      freq: 59
+      q: 1.5
+      gain: 2
 
   # --- HP RESONANCE NOTCH ---
-  # Cuts the DMA80-4 natural resonance (Fs=93.5Hz).
-  # Kills the "one-note bass" coloration — key for clean, defined bass.
   hp_resonance_notch:
     type: Biquad
     parameters:
@@ -80,14 +66,13 @@ filters:
       gain: -3
 
   # --- LOUDNESS BASS MID ---
-  # Reduced to +2: bass_vent_boost now does the heavy lifting.
   loudness_bass_mid:
     type: Biquad
     parameters:
       type: Peaking
       freq: 100
       q: 1.2
-      gain: 2
+      gain: 4
 
   # --- ROOM CORRECTION ---
   room_correction:
@@ -113,7 +98,7 @@ filters:
       type: Peaking
       freq: 600
       q: 1.0
-      gain: -1
+      gain: -2
 
   # --- PRESENCE ---
   presence:
@@ -143,8 +128,6 @@ filters:
       gain: 2
 
   # --- 10-BAND PARAMETRIC EQ ---
-  # eq_31 set to 0: nothing usable below 50Hz on this system,
-  # boosting it only wasted headroom and excursion.
   eq_31:
     type: Biquad
     parameters:
@@ -159,7 +142,7 @@ filters:
       type: Peaking
       freq: 63
       q: 1.0
-      gain: 2
+      gain: 0
 
   eq_125:
     type: Biquad
@@ -207,7 +190,7 @@ filters:
       type: Peaking
       freq: 4000
       q: 1.0
-      gain: 2.0
+      gain: 5.0
 
   eq_8k:
     type: Biquad
@@ -225,11 +208,15 @@ filters:
       q: 1.0
       gain: 3.0
 
+  # --- OUTPUT LIMITER ---
+  output_limiter:
+    type: Limiter
+    parameters:
+      clip_limit: -0.5
+      soft_clip: true
+
 mixers:
   # --- MONO SUM ---
-  # Sum L+R at -6dB each → mono at same level as original stereo.
-  # Both drivers reproduce the full signal → +3dB effective SPL,
-  # better bass from double cone surface, no phase issues.
   mono_sum:
     channels:
       in: 2
@@ -253,11 +240,9 @@ mixers:
             inverted: false
 
 pipeline:
-  # Sum L+R to mono first
   - type: Mixer
     name: mono_sum
 
-  # EQ chain — same signal on both channels
   - type: Filter
     channel: 0
     names:
@@ -284,6 +269,7 @@ pipeline:
       - eq_4k
       - eq_8k
       - eq_16k
+      - output_limiter
 
   - type: Filter
     channel: 1
@@ -311,3 +297,4 @@ pipeline:
       - eq_4k
       - eq_8k
       - eq_16k
+      - output_limiter

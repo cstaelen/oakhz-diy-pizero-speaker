@@ -1,5 +1,6 @@
 [Unit]
 Description=Configure wlan0 for Access Point mode
+After=oakhz-audio-events.service
 Before=hostapd.service dnsmasq.service
 DefaultDependencies=no
 ConditionPathNotExists=/boot/firmware/enable-wifi-client
