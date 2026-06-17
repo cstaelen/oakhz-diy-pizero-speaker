@@ -142,17 +142,6 @@ filters:
       slope: 6
       gain: 2
 
-  # --- WIDENING HIGHPASS ---
-  # Crucial fix: the stereo widening cross-feed is now filtered above 400Hz.
-  # Bass content (mostly mono) is NO LONGER phase-cancelled by the widener.
-  # This restores full, round, mono-coherent bass — the Bose/JBL way.
-  widen_highpass:
-    type: Biquad
-    parameters:
-      type: Highpass
-      freq: 400
-      q: 0.7
-
   # --- 10-BAND PARAMETRIC EQ ---
   # eq_31 set to 0: nothing usable below 50Hz on this system,
   # boosting it only wasted headroom and excursion.
@@ -170,7 +159,7 @@ filters:
       type: Peaking
       freq: 63
       q: 1.0
-      gain: 0
+      gain: 2
 
   eq_125:
     type: Biquad

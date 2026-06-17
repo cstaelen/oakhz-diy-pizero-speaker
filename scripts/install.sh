@@ -216,6 +216,9 @@ systemctl mask cloud-init.target cloud-init-local.service cloud-init.service \
     cloud-init-network.service cloud-final.service cloud-config.service 2>/dev/null || true
 systemctl disable e2scrub_reap.service 2>/dev/null || true
 systemctl disable serial-getty@ttyS0.service 2>/dev/null || true
+systemctl disable avahi-daemon.service avahi-daemon.socket 2>/dev/null || true
+systemctl disable triggerhappy.service triggerhappy.socket 2>/dev/null || true
+systemctl disable ModemManager.service 2>/dev/null || true
 
 # Enable and start services
 systemctl daemon-reload

@@ -1,6 +1,6 @@
 [Unit]
 Description=OaKhz Equalizer Web Server
-After=network.target pulseaudio.service
+After=wlan0-ap.service pulseaudio.service
 DefaultDependencies=no
 
 [Service]

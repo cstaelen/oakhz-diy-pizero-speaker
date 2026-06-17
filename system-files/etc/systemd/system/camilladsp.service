@@ -1,6 +1,7 @@
 [Unit]
 Description=CamillaDSP Audio Processor
 After=sound.target
+DefaultDependencies=no
 
 [Service]
 Type=simple
