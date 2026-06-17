@@ -61,7 +61,7 @@ filters:
   peak_limiter:
     type: Gain
     parameters:
-      gain: -4
+      gain: -2
       inverted: false
 
   # --- PREAMP ---
