@@ -1,3 +1,45 @@
+# =============================================================================
+# OaKhz Audio — CamillaDSP Configuration
+# Hardware: 2× DMA80-4 (Fs=93.5Hz, Qts=0.41, Xmax=2.5mm) + HiFiBerry MiniAmp
+# Enclosure: bass reflex, port 32mm × 60mm → accord ~60-63Hz
+# =============================================================================
+#
+# PIPELINE OVERVIEW
+# -----------------
+# Bluetooth → PulseAudio → ALSA Loopback → CamillaDSP → HiFiBerry DAC → Speakers
+#
+# 1. MONO SUM
+#    L+R summed at -6dB each → both drivers reproduce identical signal.
+#    +3dB effective SPL from double cone surface, no phase issues, correct 4Ω load.
+#
+# 2. MAIN EQ CHAIN (channels 0 & 1)
+#    - peak_limiter (-4dB): global headroom before bass boosts
+#    - hp_protection (highpass 50Hz): protect driver below port frequency
+#    - preamp_gain (+1dB): global level trim
+#    - linkwitz_transform (93.5Hz→60Hz): mathematically extends bass response
+#    - bass_vent_boost (59Hz Q=1.5 +2dB): narrow boost at port resonance
+#    - bass_allpass (63Hz Q=0.7): [OPTION A] phase correction at port freq,
+#      tightens bass transients without adding gain
+#    - hp_resonance_notch (93.5Hz -2dB): reduces "one-note bass" coloration
+#    - loudness_bass_mid (80Hz +4dB): [OPTION B] punch boost in the zone where
+#      port + cone work together — more punch, less excursion than boosting 63Hz
+#    - room_correction, mid_cut_low/high, presence, exciter, treble: tonal shaping
+#    - 10-band parametric EQ (31Hz–16kHz): user-adjustable via web UI
+#
+# 3. MULTIBAND PROCESSING [OPTIONS C + D]
+#    Split 2ch → 4ch (bass L, high L, bass R, high R)
+#    - Bass band (<200Hz, Linkwitz-Riley LR4):
+#        crossover_low + bass_harmonic (soft clip -6dB)
+#        The soft clipper generates 2nd/3rd harmonics (120Hz, 180Hz...) of the
+#        bass fundamentals → psychoacoustic depth without extra excursion.
+#    - High band (>200Hz, Linkwitz-Riley LR4): unprocessed crossover
+#    Recombine 4ch → 2ch (flat summing response from LR4 crossover)
+#
+# 4. OUTPUT LIMITER
+#    Final soft clip at -0.5dBFS: catches any remaining digital peaks.
+#
+# =============================================================================
+
 ---
 devices:
   samplerate: 48000
