@@ -17,44 +17,18 @@ Audio feedback system for OaKhz Audio. Provides audible notifications for system
 
 ## Overview
 
-The sound feedback system plays WAV notifications for system events:
-
-| Event | Sound | Trigger |
-| ----- | ----- | ------- |
-| **Ready** | Ascending C major arpeggio (C-E-G-C) | Startup, once PulseAudio is ready |
-| **Connect** | High "ding" chime | Bluetooth device connects or reconnects |
-| **Disconnect** | (tracked, no sound played) | Bluetooth device disconnects |
-| **Shutdown** | Descending minor arpeggio (G-E-C-G) | Before system shutdown |
-
-All sounds are 48kHz stereo WAV files in `/opt/oakhz/sounds/`. Ready/connect sounds play via `paplay` at **80% volume** through PulseAudio → CamillaDSP. The shutdown sound plays via `aplay` directly to the HiFiBerry DAC (PulseAudio is not used for shutdown).
+The sound feedback system plays WAV notifications for system events. All sounds are 48kHz stereo WAV files in `/opt/oakhz/sounds/`. Ready/connect sounds play via `paplay` at **80% volume** through PulseAudio → CamillaDSP. The shutdown sound plays via `aplay` directly to the HiFiBerry DAC (PulseAudio is not used for shutdown).
 
 ---
 
 ## Sound Events
 
-### Ready
-
-- **Trigger**: Startup, after PulseAudio becomes available
-- **Sound**: `ready.wav` — ascending C major arpeggio (~0.6s)
-- **Volume**: 80% via `paplay`
-
-### Connect
-
-- **Trigger**: A Bluetooth device connects or reconnects
-- **Sound**: `connect.wav` — high chime (~0.2s)
-- **Volume**: 80% via `paplay`
-- **Single device mode**: if multiple devices connect simultaneously, all but the first are automatically disconnected via `bluetoothctl`
-
-### Disconnect
-
-- Disconnect events are detected and logged, but **no sound is played**
-
-### Shutdown
-
-- **Trigger**: System shutdown / reboot / halt
-- **Sound**: `shutdown.wav` — descending minor arpeggio (~0.7s)
-- **Playback**: CamillaDSP is stopped first to release the DAC, then `aplay -D plughw:1,0` plays directly to the HiFiBerry
-- **Service**: `oakhz-shutdown-sound.service` runs as root before `shutdown.target`
+| Event | Sound | Trigger | Notes |
+| ----- | ----- | ------- | ----- |
+| **Ready** | `ready.wav` — ascending C major arpeggio (~0.6s) | Startup, after PulseAudio becomes available | 80% via `paplay` |
+| **Connect** | `connect.wav` — high chime (~0.2s) | Bluetooth device connects or reconnects | 80% via `paplay`. Single device mode: extra simultaneous connections are auto-disconnected via `bluetoothctl` |
+| **Disconnect** | — | Bluetooth device disconnects | Detected and logged, no sound played |
+| **Shutdown** | `shutdown.wav` — descending minor arpeggio (~0.7s) | System shutdown / reboot / halt | CamillaDSP is stopped first to release the DAC, then `aplay -D plughw:1,0` plays directly to the HiFiBerry. Runs as root via `oakhz-shutdown-sound.service` before `shutdown.target` |
 
 ---
 

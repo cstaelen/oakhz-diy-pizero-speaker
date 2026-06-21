@@ -30,17 +30,7 @@ This system provides a **permanent WiFi Access Point** with captive portal for e
 
 ### How does it work?
 
-```
-On Raspberry Pi boot
-           ↓
-  oakhz-recovery-mode.service
-  (checks /boot/firmware/enable-wifi-client)
-           ↓
-   ┌───────────────────────────┐
-   │  File absent? → AP Mode   │  (default)
-   │  File present? → Client   │  (recovery)
-   └───────────────────────────┘
-```
+On boot, `oakhz-recovery-mode.service` checks for `/boot/firmware/enable-wifi-client`: absent → AP mode (default), present → client mode (recovery). See [Architecture](#architecture) for the full boot sequence.
 
 In **AP mode** (default):
 - `wlan0` gets static IP `192.168.50.1`
@@ -85,17 +75,13 @@ In **Recovery mode**:
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                  Boot Sequence                          │
-├─────────────────────────────────────────────────────────┤
-│  1. oakhz-recovery-mode.service → Check recovery file   │
-│  2. wlan0-ap.service → Configure static IP              │
-│  3. hostapd.service → Start Access Point                │
-│  4. dnsmasq.service → Start DHCP + DNS (captive portal) │
-│  5. oakhz-equalizer.service → Start web interface       │
-└─────────────────────────────────────────────────────────┘
-```
+### Boot sequence
+
+1. `oakhz-recovery-mode.service` → check recovery file
+2. `wlan0-ap.service` → configure static IP
+3. `hostapd.service` → start Access Point
+4. `dnsmasq.service` → start DHCP + DNS (captive portal)
+5. `oakhz-equalizer.service` → start web interface
 
 ### Services
 

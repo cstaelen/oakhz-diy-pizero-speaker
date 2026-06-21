@@ -66,7 +66,7 @@ Power is supplied via GPIO header, not micro-USB (more reliable, avoids fragile 
 | Pin 2 or 4 (5V) | Seengreat 5V output via switch B3 |
 | Pin 6 (GND) | Seengreat GND output |
 
-> ⚠️ No reverse polarity protection on GPIO power input — double check polarity before connecting.
+> **Warning:** No reverse polarity protection on GPIO power input — double check polarity before connecting.
 
 ### USB-C charging
 
@@ -90,7 +90,7 @@ The MiniAmp connects to the Pi Zero via GPIO header using dupont female-female c
 | Pin 38 | GPIO20 | I2S SDIN | Audio data — mandatory |
 | Pin 40 | GPIO21 | I2S SCLK | System clock — mandatory |
 
-> ⚠️ Pin 37 (GPIO26 shutdown) is required — without it the amplifier power stage
+> **Warning:** Pin 37 (GPIO26 shutdown) is required — without it the amplifier power stage
 > stays in shutdown mode and no audio is output.
 
 **Speaker wiring:** Use copper hifi wire between MiniAmp output terminals and the 80mm speakers.

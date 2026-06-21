@@ -19,17 +19,7 @@ Physical rotary encoder control for OaKhz Audio. Provides volume control and med
 
 ## Overview
 
-The rotary encoder provides physical controls:
-
-| Gesture | Action |
-| ------- | ------ |
-| Rotate clockwise | Volume +3% |
-| Rotate counter-clockwise | Volume -3% |
-| Short press (< 1s) | Play / Pause |
-| Medium press (≥ 1s) | Skip to next track |
-| Long press (≥ 3s) | Shutdown system |
-
-Volume is controlled via PulseAudio (`pactl` on the `camilladsp_out` sink). Media commands use BlueZ D-Bus (`MediaControl1`) on the connected Bluetooth device.
+The rotary encoder provides physical controls for volume and media playback. Volume is controlled via PulseAudio (`pactl` on the `camilladsp_out` sink). Media commands use BlueZ D-Bus (`MediaControl1`) on the connected Bluetooth device.
 
 ---
 
@@ -94,28 +84,13 @@ Rotary controller ready
 
 ## Controls
 
-### Rotation — Volume
-
-- Clockwise: **+3%** per step
-- Counter-clockwise: **-3%** per step
-- Range: 1–100%
-- Throttled: max one change every 150ms
-
-### Short press (< 1s) — Play/Pause
-
-Toggles playback on the connected Bluetooth source via BlueZ `MediaControl1`:
-- If playing → sends Pause
-- If paused/stopped → sends Play
-
-### Medium press (≥ 1s) — Skip track
-
-Sends `MediaControl1.Next` to the connected Bluetooth device.
-
-### Long press (≥ 3s) — Shutdown
-
-1. Plays `/opt/oakhz/sounds/shutdown.mp3` via `mpg123` on `hw:Loopback,0`
-2. Waits 1 second
-3. Executes `sudo shutdown -h now`
+| Gesture | Action | Details |
+| ------- | ------ | ------- |
+| Rotate clockwise | Volume +3% | Range 1–100%, throttled to one change every 150ms |
+| Rotate counter-clockwise | Volume -3% | Range 1–100%, throttled to one change every 150ms |
+| Short press (< 1s) | Play / Pause | Toggles via BlueZ `MediaControl1` (Pause if playing, Play if paused/stopped) |
+| Medium press (≥ 1s) | Skip to next track | Sends `MediaControl1.Next` |
+| Long press (≥ 3s) | Shutdown system | Plays `shutdown.mp3` via `mpg123` on `hw:Loopback,0`, waits 1s, then `sudo shutdown -h now` |
 
 ---
 
